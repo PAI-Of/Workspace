@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pointer Writer</title>
+    <link rel="shortcut icon" href="img/writer.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #1180ff;
+            --secondary-color: #0056b3;
+            --text-color: #333;
+            --light-bg: #f8f9fa;
+            --border-color: #dee2e6;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: var(--light-bg);
+            color: var(--text-color);
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 20px auto;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .app-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            padding: 10px;
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .toolbar-group {
+            display: flex;
+            border-right: 1px solid var(--border-color);
+            padding-right: 10px;
+            margin-right: 10px;
+        }
+
+        .toolbar button {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toolbar button:hover {
+            background-color: #f0f0f0;
+        }
+
+        .toolbar button.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .toolbar select, .toolbar input {
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: white;
+        }
+
+        #editor {
+            width: 100%;
+            min-height: 500px;
+            padding: 20px;
+            outline: none;
+            background-color: white;
+            box-sizing: border-box;
+            overflow-y: auto;
+            line-height: 1.6;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-top: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        #word-count {
+            color: #666;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .import-container {
+            display: flex;
+            align-items: center;
+            margin-right: 10px;
+        }
+
+        .import-container input[type="file"] {
+            display: none;
+        }
+
+        .import-label {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 12px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        .import-label:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .import-label i {
+            margin-right: 5px;
+        }
+
+        .dark-theme {
+            --primary-color: #2196f3;
+            --secondary-color: #0d47a1;
+            --text-color: #f8f9fa;
+            --light-bg: #121212;
+            --border-color: #333;
+            background-color: #121212;
+            color: #f8f9fa;
+        }
+
+        .dark-theme .toolbar, 
+        .dark-theme #editor, 
+        .dark-theme .toolbar button,
+        .dark-theme .toolbar select, 
+        .dark-theme .toolbar input {
+            background-color: #1e1e1e;
+            color: #f8f9fa;
+            border-color: #333;
+        }
+
+        .dark-theme .toolbar button:hover {
+            background-color: #333;
+        }
+
+        .dark-theme .status-bar,
+        .dark-theme .action-buttons {
+            background-color: #1e1e1e;
+            color: #f8f9fa;
+        }
+
+        .dark-theme .import-label {
+            background-color: #2196f3;
+        }
+
+        .dark-theme .import-label:hover {
+            background-color: #0d47a1;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .toolbar {
+                flex-direction: row;
+                overflow-x: auto;
+            }
+            
+            .container {
+                width: 95%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="app-header">
+            Pointer Writer
+        </div>
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <button id="boldBtn" onclick="execCmd('bold')" title="Bold"><i class="fas fa-bold"></i></button>
+                <button id="italicBtn" onclick="execCmd('italic')" title="Italic"><i class="fas fa-italic"></i></button>
+                <button id="underlineBtn" onclick="execCmd('underline')" title="Underline"><i class="fas fa-underline"></i></button>
+                <button id="strikeBtn" onclick="execCmd('strikeThrough')" title="Strike Through"><i class="fas fa-strikethrough"></i></button>
+            </div>
+            
+            <div class="toolbar-group">
+                <select id="fontName" onchange="execCmd('fontName', this.value)" title="Font Family">
+                    <option value="Arial, sans-serif">Arial</option>
+                    <option value="'Times New Roman', serif">Times New Roman</option>
+                    <option value="'Courier New', monospace">Courier New</option>
+                    <option value="Georgia, serif">Georgia</option>
+                    <option value="Verdana, sans-serif">Verdana</option>
+                    <option value="'Segoe UI', sans-serif">Segoe UI</option>
+                </select>
+                
+                <select id="fontSize" onchange="execCmd('fontSize', this.value)" title="Font Size">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3" selected>3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                </select>
+            </div>
+            
+            <div class="toolbar-group">
+                <button onclick="execCmd('justifyLeft')" title="Align Left"><i class="fas fa-align-left"></i></button>
+                <button onclick="execCmd('justifyCenter')" title="Align Center"><i class="fas fa-align-center"></i></button>
+                <button onclick="execCmd('justifyRight')" title="Align Right"><i class="fas fa-align-right"></i></button>
+                <button onclick="execCmd('justifyFull')" title="Justify"><i class="fas fa-align-justify"></i></button>
+            </div>
+            
+            <div class="toolbar-group">
+                <button onclick="execCmd('insertOrderedList')" title="Ordered List"><i class="fas fa-list-ol"></i></button>
+                <button onclick="execCmd('insertUnorderedList')" title="Unordered List"><i class="fas fa-list-ul"></i></button>
+                <button onclick="execCmd('indent')" title="Indent"><i class="fas fa-indent"></i></button>
+                <button onclick="execCmd('outdent')" title="Outdent"><i class="fas fa-outdent"></i></button>
+            </div>
+            
+            <div class="toolbar-group">
+                <input type="color" onchange="execCmd('foreColor', this.value)" title="Font Color">
+                <input type="color" onchange="execCmd('hiliteColor', this.value)" title="Highlight Color">
+                <button onclick="execCmd('insertHorizontalRule')" title="Horizontal Rule"><i class="fas fa-minus"></i></button>
+                <button onclick="execCmd('createLink', prompt('Enter URL'))" title="Insert Link"><i class="fas fa-link"></i></button>
+                <button onclick="execCmd('unlink')" title="Remove Link"><i class="fas fa-unlink"></i></button>
+            </div>
+            
+            <div class="toolbar-group">
+                <button onclick="execCmd('undo')" title="Undo"><i class="fas fa-undo"></i></button>
+                <button onclick="execCmd('redo')" title="Redo"><i class="fas fa-redo"></i></button>
+                <button onclick="execCmd('removeFormat')" title="Clear Formatting"><i class="fas fa-eraser"></i></button>
+                <button onclick="toggleTheme()" title="Toggle Theme"><i class="fas fa-moon"></i></button>
+            </div>
+
+            <div class="import-container">
+                <label for="import-file" class="import-label">
+                    <i class="fas fa-file-import"></i> Import
+                </label>
+                <input type="file" id="import-file" accept=".html,.htm" onchange="importFile(this)">
+            </div>
+        </div>
+        
+        <div id="editor" contenteditable="true"></div>
+        
+        <div class="status-bar">
+            <div id="word-count">Words: 0 | Characters: 0</div>
+            <div id="last-saved">Not saved yet</div>
+        </div>
+        
+        <div class="action-buttons">
+            <button class="btn btn-secondary" onclick="clearEditor()">New Document</button>
+            <button class="btn btn-primary" onclick="saveText()">Save Document</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('editor').focus();
+            document.getElementById('editor').addEventListener('input', updateWordCount);
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey && e.key === 's') {
+                    e.preventDefault();
+                    saveText();
+                }
+            });
+            document.getElementById('editor').addEventListener('click', updateButtonStates);
+            document.getElementById('editor').addEventListener('keyup', updateButtonStates);
+            updateWordCount();
+        });
+
+        function execCmd(command, value = null) {
+            document.execCommand(command, false, value);
+            document.getElementById('editor').focus();
+            updateButtonStates();
+            updateWordCount();
+        }
+
+        function updateButtonStates() {
+            const commands = [
+                { id: 'boldBtn', command: 'bold' },
+                { id: 'italicBtn', command: 'italic' },
+                { id: 'underlineBtn', command: 'underline' },
+                { id: 'strikeBtn', command: 'strikeThrough' }
+            ];
+            
+            commands.forEach(item => {
+                const button = document.getElementById(item.id);
+                if (button) {
+                    if (document.queryCommandState(item.command)) {
+                        button.classList.add('active');
+                    } else {
+                        button.classList.remove('active');
+                    }
+                }
+            });
+            
+            const fontName = document.queryCommandValue('fontName');
+            const fontSize = document.queryCommandValue('fontSize');
+            
+            if (fontName) {
+                const fontSelect = document.getElementById('fontName');
+                for (let i = 0; i < fontSelect.options.length; i++) {
+                    if (fontSelect.options[i].value === fontName) {
+                        fontSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+            
+            if (fontSize) {
+                const sizeSelect = document.getElementById('fontSize');
+                for (let i = 0; i < sizeSelect.options.length; i++) {
+                    if (sizeSelect.options[i].value === fontSize) {
+                        sizeSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+        }
+
+        function updateWordCount() {
+            const text = document.getElementById('editor').innerText;
+            const wordCount = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+            const charCount = text.length;
+            
+            document.getElementById('word-count').textContent = `Words: ${wordCount} | Characters: ${charCount}`;
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+        }
+
+        function clearEditor() {
+            if (confirm('Are you sure you want to create a new document? All unsaved changes will be lost.')) {
+                document.getElementById('editor').innerHTML = '';
+                updateWordCount();
+                document.getElementById('last-saved').textContent = 'Not saved yet';
+            }
+        }
+
+        function saveText() {
+            const editorContent = document.getElementById("editor").innerHTML;
+            const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Document</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            background-color: #fff;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            margin-top: 1em;
+            margin-bottom: 0.5em;
+        }
+        
+        p {
+            margin-bottom: 1em;
+        }
+        
+        ul, ol {
+            margin-bottom: 1em;
+            padding-left: 2em;
+        }
+        
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 1em;
+        }
+        
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        
+        a {
+            color: #1180ff;
+        }
+        
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        /* Print styles */
+        @media print {
+            body {
+                font-size: 12pt;
+            }
+            
+            a {
+                text-decoration: none;
+                color: #000;
+            }
+        }
+    </style>
+</head>
+<body>
+    ${editorContent}
+</body>
+</html>`;
+            const blob = new Blob([htmlContent], { type: "text/html" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            let a = confirm("Would you like to save as HTML, default Writer? OK=writer NO=html")
+            if (a == true){
+                link.download = prompt() + ".writer";
+            } else {
+                link.download = prompt() + ".html";
+            }
+            link.click();
+            
+            const now = new Date();
+            document.getElementById('last-saved').textContent = `Last saved: ${now.toLocaleTimeString()}`;
+        }
+
+        function importFile(input) {
+            if (!input.files || input.files.length === 0) {
+                return;
+            }
+
+            const file = input.files[0];
+            if (!file.name.endsWith('.html') && !file.name.endsWith('.htm') && !file.name.endsWith('.writer') && !file.name.endsWith('.document')) {
+                alert('Please select a valid Writer Compatible file.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    // Create a temporary DOM element to parse the HTML
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = e.target.result;
+                    
+                    // Look for content in the body tag
+                    const bodyContent = tempDiv.querySelector('body');
+                    
+                    if (bodyContent) {
+                        if (confirm('Are you sure you want to import this file? Current content will be replaced.')) {
+                            document.getElementById('editor').innerHTML = bodyContent.innerHTML;
+                            updateWordCount();
+                            updateButtonStates();
+                            alert('File imported successfully!');
+                        }
+                    } else {
+                        // If no body tag, use the entire content
+                        if (confirm('Are you sure you want to import this file? Current content will be replaced.')) {
+                            document.getElementById('editor').innerHTML = tempDiv.innerHTML;
+                            updateWordCount();
+                            updateButtonStates();
+                            alert('File imported successfully!');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error importing file:', error);
+                    alert('Error importing file. Please try again with a valid HTML file.');
+                }
+            };
+            
+            reader.onerror = function() {
+                alert('Error reading file. Please try again.');
+            };
+            
+            reader.readAsText(file);
+            
+            // Reset the file input for future imports
+            input.value = '';
+        }
+    </script>
+</body>
+</html>
+<!--
+Pointer Workspace / Pointer Writer
+v1.5.0 / 2025.1a0
+Copyright (c) 2025-2030 Powered Intelligence . India
+
+-->

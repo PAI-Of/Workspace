@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pointer Smart Label - Inventory Management</title>
+    <link rel="shortcut icon" href="img/psl.png">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #4776E6 0%, #8E54E9 100%);
+            --secondary-gradient: linear-gradient(135deg, #8E54E9 0%, #4776E6 100%);
+            --light-bg: #f8f9fe;
+            --text-dark: #333;
+            --text-light: #fff;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-bg);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: var(--primary-gradient);
+            color: var(--text-light);
+            padding: 20px 0;
+            text-align: center;
+            margin-bottom: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .logo-icon {
+            font-size: 32px;
+            margin-right: 10px;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr 2fr;
+            }
+        }
+
+        .card {
+            background: #fff;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: var(--box-shadow);
+        }
+
+        .form-title {
+            margin-bottom: 20px;
+            color: #4776E6;
+            font-size: 20px;
+            border-bottom: 2px solid #f1f1f1;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+        }
+
+        .button {
+            background: var(--primary-gradient);
+            color: var(--text-light);
+            border: none;
+            padding: 12px 20px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .button:hover {
+            background: var(--secondary-gradient);
+            transform: translateY(-2px);
+        }
+
+        .button-secondary {
+            background: transparent;
+            border: 1px solid #4776E6;
+            color: #4776E6;
+        }
+
+        .button-secondary:hover {
+            background: rgba(71, 118, 230, 0.1);
+        }
+
+        .inventory-list {
+            margin-top: 20px;
+        }
+
+        .search-filter {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .search-filter input {
+            flex: 1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f1f1f5;
+            font-weight: 600;
+        }
+
+        tbody tr:hover {
+            background-color: #f9f9ff;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn-edit, .btn-delete {
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: none;
+            font-size: 14px;
+        }
+
+        .btn-edit {
+            background-color: #4776E6;
+            color: white;
+        }
+
+        .btn-delete {
+            background-color: #ff4757;
+            color: white;
+        }
+
+        .status-in-stock {
+            color: #2ed573;
+            font-weight: 500;
+        }
+
+        .status-low-stock {
+            color: #ffa502;
+            font-weight: 500;
+        }
+
+        .status-out-of-stock {
+            color: #ff4757;
+            font-weight: 500;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 0;
+            color: #888;
+        }
+
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #fff;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: var(--box-shadow);
+            text-align: center;
+        }
+
+        .stat-card.total-items {
+            border-top: 4px solid #4776E6;
+        }
+
+        .stat-card.low-stock {
+            border-top: 4px solid #ffa502;
+        }
+
+        .stat-card.out-of-stock {
+            border-top: 4px solid #ff4757;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #888;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 25px;
+            border-radius: var(--border-radius);
+            width: 100%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #888;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: var(--primary-gradient);
+            color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <span class="logo-icon">📦</span>
+                <h1>Pointer Smart Label</h1>
+            </div>
+            <p class="subtitle">Inventory Management System</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="dashboard-cards">
+            <div class="stat-card total-items">
+                <div class="stat-value" id="total-items">0</div>
+                <div class="stat-label">Total Items</div>
+            </div>
+            <div class="stat-card low-stock">
+                <div class="stat-value" id="low-stock">0</div>
+                <div class="stat-label">Low Stock Items</div>
+            </div>
+            <div class="stat-card out-of-stock">
+                <div class="stat-value" id="out-of-stock">0</div>
+                <div class="stat-label">Out of Stock</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="card">
+                <h2 class="form-title">Add New Item</h2>
+                <form id="inventory-form">
+                    <div class="form-group">
+                        <label for="item-name">Item Name</label>
+                        <input type="text" id="item-name" placeholder="Enter item name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="item-category">Category</label>
+                        <select id="item-category" required>
+                            <option value="">Select a category</option>
+                            <option value="Electronics">Electronics</option>
+                            <option value="Office Supplies">Office Supplies</option>
+                            <option value="Furniture">Furniture</option>
+                            <option value="Clothing">Clothing</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="item-quantity">Quantity</label>
+                        <input type="number" id="item-quantity" min="0" placeholder="Enter quantity" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="item-price">Price ($)</label>
+                        <input type="number" id="item-price" min="0" step="0.01" placeholder="Enter price" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="item-location">Storage Location</label>
+                        <input type="text" id="item-location" placeholder="Enter storage location">
+                    </div>
+                    <div class="form-group">
+                        <label for="item-notes">Notes</label>
+                        <textarea id="item-notes" rows="3" placeholder="Additional information"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="button">Add Item</button>
+                        <button type="reset" class="button button-secondary">Clear Form</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2 class="form-title">Inventory List</h2>
+                <div class="search-filter">
+                    <input type="text" id="search-inventory" placeholder="Search items...">
+                    <select id="filter-category">
+                        <option value="">All Categories</option>
+                        <option value="Electronics">Electronics</option>
+                        <option value="Office Supplies">Office Supplies</option>
+                        <option value="Furniture">Furniture</option>
+                        <option value="Clothing">Clothing</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="inventory-list">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item Name</th>
+                                <th>Category</th>
+                                <th>Quantity</th>
+                                <th>Price</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-table">
+                            <!-- Inventory items will be displayed here -->
+                        </tbody>
+                    </table>
+                    <div id="empty-inventory" class="empty-state">
+                        <p>No inventory items found. Add your first item!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Item Modal -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 class="form-title">Edit Item</h2>
+            <form id="edit-form">
+                <input type="hidden" id="edit-id">
+                <div class="form-group">
+                    <label for="edit-name">Item Name</label>
+                    <input type="text" id="edit-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-category">Category</label>
+                    <select id="edit-category" required>
+                        <option value="Electronics">Electronics</option>
+                        <option value="Office Supplies">Office Supplies</option>
+                        <option value="Furniture">Furniture</option>
+                        <option value="Clothing">Clothing</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="edit-quantity">Quantity</label>
+                    <input type="number" id="edit-quantity" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-price">Price ($)</label>
+                    <input type="number" id="edit-price" min="0" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-location">Storage Location</label>
+                    <input type="text" id="edit-location">
+                </div>
+                <div class="form-group">
+                    <label for="edit-notes">Notes</label>
+                    <textarea id="edit-notes" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="button">Update Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification element -->
+    <div class="notification" id="notification"></div>
+
+    <script>
+        // Initialize inventory from localStorage or create empty array
+        let inventory = JSON.parse(localStorage.getItem('pslInventory')) || [];
+        let editingIndex = -1;
+
+        // DOM elements
+        const inventoryForm = document.getElementById('inventory-form');
+        const inventoryTable = document.getElementById('inventory-table');
+        const emptyInventory = document.getElementById('empty-inventory');
+        const editModal = document.getElementById('edit-modal');
+        const editForm = document.getElementById('edit-form');
+        const closeModal = document.querySelector('.close-modal');
+        const searchInput = document.getElementById('search-inventory');
+        const categoryFilter = document.getElementById('filter-category');
+        const notification = document.getElementById('notification');
+
+        // Dashboard stats
+        const totalItemsElement = document.getElementById('total-items');
+        const lowStockElement = document.getElementById('low-stock');
+        const outOfStockElement = document.getElementById('out-of-stock');
+
+        // Load inventory on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            displayInventory();
+            updateDashboardStats();
+        });
+
+        // Add new item form submission
+        inventoryForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const newItem = {
+                id: Date.now(), // unique ID based on timestamp
+                name: document.getElementById('item-name').value,
+                category: document.getElementById('item-category').value,
+                quantity: parseInt(document.getElementById('item-quantity').value),
+                price: parseFloat(document.getElementById('item-price').value).toFixed(2),
+                location: document.getElementById('item-location').value,
+                notes: document.getElementById('item-notes').value,
+                dateAdded: new Date().toISOString()
+            };
+            
+            inventory.push(newItem);
+            saveInventory();
+            displayInventory();
+            updateDashboardStats();
+            inventoryForm.reset();
+            
+            showNotification('Item added successfully!');
+        });
+
+        // Edit form submission
+        editForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (editingIndex >= 0) {
+                inventory[editingIndex] = {
+                    ...inventory[editingIndex],
+                    name: document.getElementById('edit-name').value,
+                    category: document.getElementById('edit-category').value,
+                    quantity: parseInt(document.getElementById('edit-quantity').value),
+                    price: parseFloat(document.getElementById('edit-price').value).toFixed(2),
+                    location: document.getElementById('edit-location').value,
+                    notes: document.getElementById('edit-notes').value
+                };
+                
+                saveInventory();
+                displayInventory();
+                updateDashboardStats();
+                closeEditModal();
+                
+                showNotification('Item updated successfully!');
+            }
+        });
+
+        // Search and filter functionality
+        searchInput.addEventListener('input', displayInventory);
+        categoryFilter.addEventListener('change', displayInventory);
+
+        // Close modal
+        closeModal.addEventListener('click', closeEditModal);
+        window.addEventListener('click', function(e) {
+            if (e.target === editModal) {
+                closeEditModal();
+            }
+        });
+
+        // Display inventory in the table
+        function displayInventory() {
+            // Get search and filter values
+            const searchTerm = searchInput.value.toLowerCase();
+            const categoryValue = categoryFilter.value;
+            
+            // Filter inventory based on search and category
+            const filteredInventory = inventory.filter(item => {
+                const nameMatch = item.name.toLowerCase().includes(searchTerm);
+                const categoryMatch = categoryValue === '' || item.category === categoryValue;
+                return nameMatch && categoryMatch;
+            });
+            
+            // Clear the table
+            inventoryTable.innerHTML = '';
+            
+            // Show or hide the empty state
+            if (filteredInventory.length === 0) {
+                emptyInventory.style.display = 'block';
+            } else {
+                emptyInventory.style.display = 'none';
+                
+                // Add each item to the table
+                filteredInventory.forEach((item, index) => {
+                    const row = document.createElement('tr');
+                    
+                    // Determine status based on quantity
+                    let status, statusClass;
+                    if (item.quantity === 0) {
+                        status = 'Out of Stock';
+                        statusClass = 'status-out-of-stock';
+                    } else if (item.quantity <= 5) {
+                        status = 'Low Stock';
+                        statusClass = 'status-low-stock';
+                    } else {
+                        status = 'In Stock';
+                        statusClass = 'status-in-stock';
+                    }
+                    
+                    row.innerHTML = `
+                        <td>${item.name}</td>
+                        <td>${item.category}</td>
+                        <td>${item.quantity}</td>
+                        <td>$${item.price}</td>
+                        <td class="${statusClass}">${status}</td>
+                        <td class="action-buttons">
+                            <button class="btn-edit" data-index="${inventory.indexOf(item)}">Edit</button>
+                            <button class="btn-delete" data-index="${inventory.indexOf(item)}">Delete</button>
+                        </td>
+                    `;
+                    
+                    inventoryTable.appendChild(row);
+                });
+                
+                // Add event listeners to edit and delete buttons
+                document.querySelectorAll('.btn-edit').forEach(button => {
+                    button.addEventListener('click', function() {
+                        openEditModal(parseInt(this.dataset.index));
+                    });
+                });
+                
+                document.querySelectorAll('.btn-delete').forEach(button => {
+                    button.addEventListener('click', function() {
+                        deleteItem(parseInt(this.dataset.index));
+                    });
+                });
+            }
+        }
+
+        // Save inventory to localStorage
+        function saveInventory() {
+            localStorage.setItem('pslInventory', JSON.stringify(inventory));
+        }
+
+        // Delete an item
+        function deleteItem(index) {
+            if (confirm('Are you sure you want to delete this item?')) {
+                inventory.splice(index, 1);
+                saveInventory();
+                displayInventory();
+                updateDashboardStats();
+                showNotification('Item deleted successfully!');
+            }
+        }
+
+        // Open edit modal
+        function openEditModal(index) {
+            editingIndex = index;
+            const item = inventory[index];
+            
+            document.getElementById('edit-id').value = item.id;
+            document.getElementById('edit-name').value = item.name;
+            document.getElementById('edit-category').value = item.category;
+            document.getElementById('edit-quantity').value = item.quantity;
+            document.getElementById('edit-price').value = item.price;
+            document.getElementById('edit-location').value = item.location || '';
+            document.getElementById('edit-notes').value = item.notes || '';
+            
+            editModal.style.display = 'flex';
+        }
+
+        // Close edit modal
+        function closeEditModal() {
+            editModal.style.display = 'none';
+            editingIndex = -1;
+        }
+
+        // Update dashboard statistics
+        function updateDashboardStats() {
+            const totalItems = inventory.length;
+            const lowStock = inventory.filter(item => item.quantity > 0 && item.quantity <= 5).length;
+            const outOfStock = inventory.filter(item => item.quantity === 0).length;
+            
+            totalItemsElement.textContent = totalItems;
+            lowStockElement.textContent = lowStock;
+            outOfStockElement.textContent = outOfStock;
+        }
+
+        // Show notification
+        function showNotification(message) {
+            notification.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        // Adding .labels file 
+        function dowload_inventory_as_labels(){
+            let label_data = localStorage.getItem('pslInventory', JSON.stringify(inventory));
+            const blob = new Blob([label_data], { type: "label" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = prompt() + ".labels";
+            link.click();
+        }
+    </script>
+</body>
+</html>

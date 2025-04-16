@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focux | Productivity Suite</title>
+    <link rel="shortcut icon" href="../img/fcx.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #7c3aed;
+            --primary-light: #9d6eff;
+            --secondary-color: #10b981;
+            --dark-accent: #374151;
+            --light-bg: #faf7f2;
+            --warm-accent: #de8a5a;
+            --text-dark: #1f2937;
+            --text-light: #ffffff;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--light-bg);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            flex: 1;
+        }
+        
+        header {
+            padding: 2rem 0;
+            text-align: center;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            color: var(--text-light);
+            border-radius: 0 0 2rem 2rem;
+            margin-bottom: 3rem;
+            box-shadow: var(--shadow-md);
+        }
+        
+        .logo {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            letter-spacing: -1px;
+        }
+        
+        .tagline {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .main-content {
+            text-align: center;
+            padding: 2rem 0;
+        }
+        
+        .welcome-heading {
+            font-size: 2.2rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            color: var(--dark-accent);
+        }
+        
+        .actions-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .action-card {
+            background-color: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            width: 300px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .action-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .action-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: inline-block;
+        }
+        
+        .action-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--dark-accent);
+        }
+        
+        .action-description {
+            color: #64748b;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: background-color 0.2s;
+            border: none;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .btn:hover {
+            background-color: var(--primary-light);
+        }
+        
+        .btn-todo {
+            background-color: var(--primary-color);
+        }
+        
+        .btn-project {
+            background-color: var(--secondary-color);
+        }
+        
+        .btn-project:hover {
+            background-color: #0da271;
+        }
+        
+        footer {
+            background-color: var(--dark-accent);
+            color: white;
+            padding: 1.5rem 0;
+            text-align: center;
+            margin-top: 3rem;
+        }
+        
+        .footer-content {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .copyright {
+            font-weight: 400;
+        }
+        
+        @media (max-width: 768px) {
+            .actions-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .action-card {
+                width: 100%;
+                max-width: 350px;
+            }
+            
+            .welcome-heading {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">FOCUX</div>
+        <p class="tagline">Your complete productivity suite</p>
+    </header>
+    
+    <div class="container">
+        <main class="main-content">
+            <h1 class="welcome-heading">What would you like to focus on today?</h1>
+            
+            <div class="actions-container">
+                <div class="action-card">
+                    <span class="action-icon">📋</span>
+                    <h2 class="action-title">Manage Tasks</h2>
+                    <p class="action-description">Create to-do lists, set priorities, and track your daily progress with our intuitive task manager.</p>
+                    <a href="todo.html" class="btn btn-todo">Create TODO List</a>
+                </div>
+                
+                <div class="action-card">
+                    <span class="action-icon">📊</span>
+                    <h2 class="action-title">Track Projects</h2>
+                    <p class="action-description">Organize complex projects, set milestones, and monitor progress all in one convenient dashboard.</p>
+                    <a href="proj.html" class="btn btn-project">Manage Projects</a>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <footer>
+        <div class="footer-content">
+            <p class="copyright">&copy; FCX | FOCUX | PRDV | PRDVE 2025-2030</p>
+        </div>
+    </footer>
+</body>
+</html>

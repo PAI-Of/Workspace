@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pointer PEN</title>
+    <link rel="shortcut icon" href="img/pen.png" />
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 15px;
+            background-color: #f5f5f5; /* Light gray background */
+            color: #333; /* Dark gray text */
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: #2c3e50; /* Dark blue-gray */
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 1.8rem;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        @media (min-width: 768px) {
+            body {
+                padding: 20px;
+            }
+            
+            .app-container {
+                flex-direction: row;
+                gap: 20px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+        }
+
+        /* Notes List Styling */
+        .notes-list {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            overflow-y: auto;
+            position: relative; /* For context menu positioning */
+            max-height: 200px;
+        }
+
+        @media (min-width: 768px) {
+            .notes-list {
+                flex: 0 0 300px;
+                max-height: calc(100vh - 100px);
+                margin-bottom: 0;
+            }
+        }
+
+        .notes-list h2 {
+            color: #2c3e50;
+            margin-top: 0;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            font-size: 1.2rem;
+            text-align: center;
+        }
+
+        .notes-list ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .notes-list li {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            position: relative;
+            font-size: 0.9rem;
+        }
+
+        .notes-list li:hover {
+            background-color: #f0f7fa; /* Light blue on hover */
+        }
+
+        .notes-list li:last-child {
+            border-bottom: none;
+        }
+
+        /* Mobile touch indicator */
+        .notes-list li:active {
+            background-color: #e1f0fa;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        /* Textarea Styling */
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            background-color: #fff;
+            color: #333;
+            resize: vertical;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            line-height: 1.5;
+        }
+
+        @media (min-width: 768px) {
+            textarea {
+                height: calc(100vh - 180px);
+            }
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #3498db; /* Medium blue when focused */
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        /* Buttons Styling */
+        .buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 12px 15px;
+            border: none;
+            border-radius: 5px;
+            background-color: #3498db; /* Medium blue */
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            flex: 1;
+            min-width: 100px;
+            text-align: center;
+            touch-action: manipulation; /* Better touch behavior */
+        }
+
+        @media (min-width: 768px) {
+            button {
+                flex: 0 1 auto;
+                padding: 10px 20px;
+            }
+        }
+
+        button:hover {
+            background-color: #2980b9; /* Darker blue on hover */
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        #clearButton {
+            background-color: #e74c3c; /* Red */
+        }
+
+        #clearButton:hover {
+            background-color: #c0392b; /* Darker red on hover */
+        }
+
+        /* Status message */
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .status.success {
+            display: block;
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            display: block;
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Context Menu */
+        .context-menu {
+            position: absolute;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 5px 0;
+            z-index: 1000;
+            display: none;
+        }
+
+        .context-menu-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            color: #e74c3c; /* Red text for delete */
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .context-menu-item:hover {
+            background-color: #f8f8f8;
+        }
+
+        /* Touch-friendly action buttons for mobile */
+        .note-actions {
+            display: none;
+            justify-content: flex-end;
+            gap: 5px;
+        }
+
+        .note-action-btn {
+            padding: 3px 5px;
+            border: none;
+            border-radius: 3px;
+            background-color: #3498db;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .delete-btn {
+            background-color: #e74c3c;
+        }
+
+        /* Show actions on mobile */
+        @media (max-width: 767px) {
+            .notes-list li {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding-right: 5px;
+            }
+            
+            .note-title {
+                flex: 1;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                padding-right: 5px;
+            }
+            
+            .note-actions {
+                display: flex;
+            }
+        }
+
+        /* Confirmation Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+            display: none;
+        }
+
+        .modal {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 450px;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .modal-btn-no {
+            background-color: #7f8c8d; /* Gray for No */
+        }
+
+        .modal-btn-no:hover {
+            background-color: #6c7a7a;
+        }
+
+        .modal-btn-yes {
+            background-color: #e74c3c; /* Red for Yes/Delete */
+        }
+
+        .modal-btn-yes:hover {
+            background-color: #c0392b;
+        }
+
+        /* File Input for Import */
+        .file-input-container {
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        #fileInput {
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-input-label {
+            display: block;
+            width: 100%;
+            padding: 12px 15px;
+            background-color: #2ecc71; /* Green */
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 5px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        @media (min-width: 768px) {
+            .file-input-label {
+                display: inline-block;
+                width: auto;
+                padding: 10px 20px;
+            }
+        }
+
+        .file-input-label:hover {
+            background-color: #27ae60; /* Darker green */
+        }
+    </style>
+</head>
+<body>
+    <h1>Pointer PEN</h1>
+    
+    <div class="app-container">
+        <!-- Notes List -->
+        <div class="notes-list">
+            <h2>RECENT NOTES</h2>
+            <ul id="notesList"></ul>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <textarea id="noteInput" placeholder="Write your notes here..."></textarea>
+            <div class="buttons">
+                <button id="saveButton">Save Note</button>
+                <button id="exportButton">Export Notebook</button>
+                <div class="file-input-container">
+                    <input type="file" id="fileInput" accept=".notebook,.json,.txt">
+                    <label for="fileInput" class="file-input-label">Import Notebook</label>
+                </div>
+                <button id="clearButton">Clear</button>
+            </div>
+            <div id="statusMessage" class="status"></div>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div id="contextMenu" class="context-menu">
+        <div class="context-menu-item" id="deleteMenuItem">DELETE NOTE</div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmationModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-title" id="confirmationText">DO YOU REALLY WANT TO DELETE THIS NOTE?</div>
+            <div class="modal-buttons">
+                <button class="modal-btn-no" id="cancelDeleteBtn">NO</button>
+                <button class="modal-btn-yes" id="confirmDeleteBtn">YES</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const noteInput = document.getElementById('noteInput');
+        const saveButton = document.getElementById('saveButton');
+        const exportButton = document.getElementById('exportButton');
+        const fileInput = document.getElementById('fileInput');
+        const clearButton = document.getElementById('clearButton');
+        const notesList = document.getElementById('notesList');
+        const statusMessage = document.getElementById('statusMessage');
+        const contextMenu = document.getElementById('contextMenu');
+        const deleteMenuItem = document.getElementById('deleteMenuItem');
+        const confirmationModal = document.getElementById('confirmationModal');
+        const confirmationText = document.getElementById('confirmationText');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+        // Current context
+        let currentNoteIndex = -1;
+        let currentNoteText = '';
+        let isMobile = window.innerWidth < 768;
+
+        // Show status message
+        function showStatus(message, isError = false) {
+            statusMessage.textContent = message;
+            statusMessage.className = isError ? 'status error' : 'status success';
+            setTimeout(() => {
+                statusMessage.className = 'status';
+            }, 3000);
+        }
+
+        // Load saved notes from localStorage
+        let savedNotes = JSON.parse(localStorage.getItem('notes')) || [];
+
+        // Display saved notes
+        function displayNotes() {
+            notesList.innerHTML = '';
+            
+            // Display notes in reverse order (newest first)
+            const reversedNotes = [...savedNotes].reverse();
+            
+            reversedNotes.forEach((note, index) => {
+                const li = document.createElement('li');
+                
+                // Use first 30 characters as preview
+                const preview = note.length > 30 ? note.substring(0, 30) + '...' : note;
+                
+                if (isMobile) {
+                    // Mobile layout with action buttons
+                    const titleSpan = document.createElement('span');
+                    titleSpan.className = 'note-title';
+                    titleSpan.textContent = preview;
+                    titleSpan.title = note; // Show full note on hover
+                    
+                    const actionsDiv = document.createElement('div');
+                    actionsDiv.className = 'note-actions';
+                    
+                    const editBtn = document.createElement('button');
+                    editBtn.className = 'note-action-btn edit-btn';
+                    editBtn.textContent = 'Edit';
+                    editBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        noteInput.value = note;
+                    });
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'note-action-btn delete-btn';
+                    deleteBtn.textContent = 'Delete';
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        currentNoteIndex = savedNotes.length - 1 - index;
+                        currentNoteText = preview;
+                        
+                        // Update confirmation text
+                        confirmationText.textContent = `DO YOU REALLY WANT TO DELETE "${preview}"?`;
+                        
+                        // Show confirmation modal
+                        confirmationModal.style.display = 'flex';
+                    });
+                    
+                    actionsDiv.appendChild(editBtn);
+                    actionsDiv.appendChild(deleteBtn);
+                    
+                    li.appendChild(titleSpan);
+                    li.appendChild(actionsDiv);
+                    
+                    // Tap on note title to edit
+                    titleSpan.addEventListener('click', () => {
+                        noteInput.value = note;
+                    });
+                } else {
+                    // Desktop layout
+                    li.textContent = preview;
+                    li.title = note; // Show full note on hover
+                    
+                    // Left click - edit note
+                    li.addEventListener('click', () => {
+                        noteInput.value = note;
+                    });
+                    
+                    // Right click - show context menu
+                    li.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        // Save the index in the reversed array
+                        currentNoteIndex = savedNotes.length - 1 - index;
+                        currentNoteText = preview;
+                        
+                        // Position and show context menu
+                        contextMenu.style.left = `${e.pageX}px`;
+                        contextMenu.style.top = `${e.pageY}px`;
+                        contextMenu.style.display = 'block';
+                    });
+                }
+                
+                notesList.appendChild(li);
+            });
+        }
+
+        // Save Note to localStorage
+        saveButton.addEventListener('click', () => {
+            const noteText = noteInput.value.trim();
+            if (noteText) {
+                savedNotes.push(noteText);
+                localStorage.setItem('notes', JSON.stringify(savedNotes));
+                displayNotes();
+                showStatus('Note saved successfully!');
+                // Don't clear input after saving to allow continuing work
+            }
+        });
+
+        // Export notebook
+        exportButton.addEventListener('click', () => {
+            if (savedNotes.length === 0) {
+                showStatus('No notes to export!', true);
+                return;
+            }
+            
+            const notebookData = JSON.stringify(savedNotes);
+            const blob = new Blob([notebookData], { type: "application/json" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            
+            // Prompt for notebook name
+            const notebookName = prompt("Enter your notebook name:", "my_notes");
+            if (!notebookName) return; // User cancelled
+            
+            link.download = `${notebookName}.notebook`;
+            link.click();
+            showStatus('Notebook exported successfully!');
+        });
+
+        // Import notebook
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    // Try to parse the file content as JSON
+                    const importedNotes = JSON.parse(event.target.result);
+                    
+                    // Validate that it's an array
+                    if (Array.isArray(importedNotes)) {
+                        // Merge with existing notes or replace existing notes
+                        if (confirm("Do you want to merge with existing notes? Click OK to merge, Cancel to replace.")) {
+                            savedNotes = [...savedNotes, ...importedNotes];
+                        } else {
+                            savedNotes = importedNotes;
+                        }
+                        
+                        localStorage.setItem('notes', JSON.stringify(savedNotes));
+                        displayNotes();
+                        showStatus(`Notebook imported successfully! Added ${importedNotes.length} notes.`);
+                    } else {
+                        showStatus('Invalid notebook format. Please import a valid .notebook file.', true);
+                    }
+                } catch (error) {
+                    // Try to handle as plain text - one note
+                    try {
+                        const plainText = event.target.result;
+                        if (plainText.trim()) {
+                            savedNotes.push(plainText.trim());
+                            localStorage.setItem('notes', JSON.stringify(savedNotes));
+                            displayNotes();
+                            showStatus('Text imported as a new note.');
+                        } else {
+                            showStatus('The file appears to be empty.', true);
+                        }
+                    } catch (e) {
+                        showStatus('Error importing notebook: ' + error.message, true);
+                    }
+                }
+                
+                // Reset file input
+                fileInput.value = '';
+            };
+            
+            reader.onerror = function() {
+                showStatus('Error reading file.', true);
+            };
+            
+            reader.readAsText(file);
+        });
+
+        // Clear Input
+        clearButton.addEventListener('click', () => {
+            noteInput.value = '';
+        });
+        
+        // Handle context menu delete option
+        deleteMenuItem.addEventListener('click', () => {
+            if (currentNoteIndex >= 0) {
+                // Get the preview text of the note for confirmation
+                const preview = currentNoteText;
+                
+                // Update confirmation text
+                confirmationText.textContent = `DO YOU REALLY WANT TO DELETE "${preview}"?`;
+                
+                // Show confirmation modal
+                confirmationModal.style.display = 'flex';
+                
+                // Hide the context menu
+                contextMenu.style.display = 'none';
+            }
+        });
+        
+        // Handle confirmation modal buttons
+        cancelDeleteBtn.addEventListener('click', () => {
+            confirmationModal.style.display = 'none';
+            currentNoteIndex = -1;
+        });
+        
+        confirmDeleteBtn.addEventListener('click', () => {
+            if (currentNoteIndex >= 0) {
+                // Remove the note
+                savedNotes.splice(currentNoteIndex, 1);
+                localStorage.setItem('notes', JSON.stringify(savedNotes));
+                
+                // Update display
+                displayNotes();
+                showStatus('Note deleted successfully!');
+                
+                // Clear current note if it was being edited
+                if (noteInput.value === savedNotes[currentNoteIndex]) {
+                    noteInput.value = '';
+                }
+                
+                // Hide confirmation modal
+                confirmationModal.style.display = 'none';
+                currentNoteIndex = -1;
+            }
+        });
+        
+        // Close context menu when clicking elsewhere
+        document.addEventListener('click', () => {
+            contextMenu.style.display = 'none';
+        });
+        
+        // Prevent right click on context menu
+        contextMenu.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+
+        // Check if device is mobile and update layout if needed
+        function checkDeviceType() {
+            const wasMobile = isMobile;
+            isMobile = window.innerWidth < 768;
+            
+            if (wasMobile !== isMobile) {
+                // Update layout if device type changed
+                displayNotes();
+            }
+        }
+
+        // Listen for window resize events
+        window.addEventListener('resize', checkDeviceType);
+
+        // Initial Display
+        checkDeviceType();
+        displayNotes();
+    </script>
+</body>
+</html>

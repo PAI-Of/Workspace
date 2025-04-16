@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workspace.Web</title>
+    <link rel="shortcut icon" href="img/FAVICON.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4cc9f0;
+            --dark-bg: #1a1a2e;
+            --card-bg: #242448;
+            --text-light: #ffffff;
+            --text-muted: #b8c1ec;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .logo {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            max-width: 700px;
+            margin: 0 auto 1.5rem;
+        }
+        
+        .version-badge {
+            display: inline-block;
+            background-color: var(--secondary-color);
+            color: var(--text-light);
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+        }
+        
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .app-card {
+            background-color: var(--card-bg);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .app-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .app-title {
+            display: flex;
+            align-items: center;
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        
+        .app-icon {
+            font-size: 1.5rem;
+            margin-right: 0.75rem;
+        }
+        
+        .app-description {
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+        }
+        
+        .app-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .app-version {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            text-align: center;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .btn-full {
+            display: block;
+            width: 100%;
+        }
+        
+        .prototype-tag {
+            display: inline-block;
+            background-color: #ff7b00;
+            color: white;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.25rem;
+            margin-left: 0.5rem;
+            vertical-align: middle;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .apps-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .logo {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="logo">Workspace.Web</h1>
+            <p class="subtitle">
+                Welcome to Pointer Workspace.Web. Experience our productivity suite online - free to try, with premium features available.
+            </p>
+            <div class="version-badge">Current Version: 2025.1a0</div>
+        </header>
+        
+        <div class="apps-grid">
+            <div class="app-card">
+                <h2 class="app-title"><span class="app-icon">🗒️</span> pWriter</h2>
+                <p class="app-description">A powerful word processor built with vanilla JavaScript. Create and edit documents with ease.</p>
+                <div class="app-meta">
+                    <span>pWriter™</span>
+                    <span class="app-version">v25.1a</span>
+                </div>
+                <a href="./writer.html" class="btn btn-full">Try pWriter</a>
+            </div>
+            
+            <div class="app-card">
+                <h2 class="app-title"><span class="app-icon">📊</span> pSheets</h2>
+                <p class="app-description">Create spreadsheets, analyze data, and perform calculations with this flexible tool.</p>
+                <div class="app-meta">
+                    <span>pSheets™</span>
+                    <span class="app-version">v25.1a0</span>
+                </div>
+                <a href="./sheets.html" class="btn btn-full">Try pSheets</a>
+            </div>
+            
+            <div class="app-card">
+                <h2 class="app-title"><span class="app-icon">🏷️</span> Smart Label</h2>
+                <p class="app-description">Inventory management made simple. Track and organize your items efficiently.</p>
+                <div class="app-meta">
+                    <span>piSmart Label™</span>
+                    <span class="app-version">v25.1a</span>
+                </div>
+                <a href="./smart-lab.html" class="btn btn-full">Try Smart Label</a>
+            </div>
+            
+            <div class="app-card">
+                <h2 class="app-title"><span class="app-icon">🖊️</span> Pen</h2>
+                <p class="app-description">Capture your thoughts quickly with PEN (pNoter) - perfect for jotting down ideas.</p>
+                <div class="app-meta">
+                    <span>PEN™ (pNoter)</span>
+                    <span class="app-version">v25.1</span>
+                </div>
+                <a href="./pen.html" class="btn btn-full">Try Pen</a>
+            </div>
+            
+            <div class="app-card">
+                <h2 class="app-title"><span class="app-icon">🌱</span> Focux</h2>
+                <p class="app-description">The complete productivity suite. Manage projects, todos and notes in one place.</p>
+                <div class="app-meta">
+                    <span>Focux | PRDV™</span>
+                    <span class="app-version">v25.1a</span>
+                </div>
+                <a href="./focux/index.html" class="btn btn-full">Try Focux</a>
+            </div>
+            
+            <div class="app-card">
+                <h2 class="app-title">
+                    <span class="app-icon">📊</span> Present
+                    <span class="prototype-tag">PROTOTYPE</span>
+                </h2>
+                <p class="app-description">Create engaging presentations with this early-access presentation tool. Currently has slide CRUD functionality, with export/import coming soon.</p>
+                <div class="app-meta">
+                    <span>Present™</span>
+                    <span class="app-version">v25.1a0.0</span>
+                </div>
+                <a href="./present/present.htm" class="btn btn-full">Try Present</a>
+            </div>
+            <div class="app-card">
+                <h2 class="app-title">
+                    <span class="app-icon">📚</span> Caux
+                    <span class="prototype-tag">PROTOTYPE</span>
+                </h2>
+                <p class="app-description">
+                    The Caux is a data studio who want to gain/collect some valuable 
+                    data. Like Visualizing the data, sorting the data, finding similarity
+                    or finding the summarized data.
+                </p>
+                <div class="app-meta">
+                    <span>pCaux™</span>
+                    <span class="app-version">v25.1a-0</span>
+                </div>
+                <a href="./caux/map.html" class="btn btn-full" style="margin-bottom: 10px;">Try Caux/map</a>
+                <a href="./caux/summarizer.html" class="btn btn-full">Try Caux/summarizer</a>
+                <p>Other are in prototype.</p>
+            </div>
+            <div class="app-card">
+                <h2 class="app-title">
+                    <span class="app-icon">🧮➕</span> pCalc
+                    <span class="prototype-tag">PROTOTYPE</span>
+                </h2>
+                <p class="app-description">
+                    The pCalc is a GUI based calculator which is very fast and 
+                    begineer friendly. It is a simple calculator which can do
+                    mathematical operations and translate BIN, HEX, DEC into 
+                    each other. Use it ... love it.
+                </p>
+                <div class="app-meta">
+                    <span>pCalc™</span>
+                    <span class="app-version">v25.1</span>
+                </div>
+                <a href="./calc.html" class="btn btn-full" style="margin-bottom: 10px;">Try Calc</a>
+            </div>
+        </div>
+        
+        <footer>
+            <p>All products developed in vanilla JavaScript by Pawan Yadav &copy; 2025</p>
+        </footer>
+    </div>
+</body>
+</html>

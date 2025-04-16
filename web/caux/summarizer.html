@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PI Summarizr - Text Summarization Tool</title>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #3f37c9;
+            --accent: #4895ef;
+            --text: #333;
+            --text-light: #666;
+            --bg: #f8f9fa;
+            --bg-card: #fff;
+            --border: #e0e0e0;
+            --error: #d90429;
+            --success: #06d6a0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background-color: var(--bg);
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .tagline {
+            color: var(--text-light);
+            font-size: 16px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            padding: 24px;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+        }
+
+        .input-section, .output-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--secondary);
+            margin-bottom: 5px;
+        }
+
+        .section-stats {
+            font-size: 14px;
+            color: var(--text-light);
+            font-weight: normal;
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 15px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 16px;
+            resize: vertical;
+            transition: border 0.3s ease;
+            font-family: inherit;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 15px;
+            color: var(--text);
+        }
+
+        input[type="number"] {
+            width: 70px;
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 15px;
+            text-align: center;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        button:disabled {
+            background-color: var(--border);
+            cursor: not-allowed;
+        }
+
+        .output-container {
+            position: relative;
+        }
+
+        .summary-box {
+            min-height: 120px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: left;
+            line-height: 1.7;
+        }
+
+        .stats-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            font-size: 14px;
+            color: var(--text-light);
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .spinner {
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 3px solid var(--primary);
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+
+        .error-message {
+            color: var(--error);
+            font-size: 14px;
+            margin-top: 6px;
+            display: none;
+        }
+
+        .loader-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            margin-left: 5px;
+            cursor: help;
+        }
+
+        .tooltip .icon {
+            color: var(--text-light);
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 14px;
+            font-weight: normal;
+        }
+
+        .tooltip .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #555 transparent transparent transparent;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            button {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Copy button */
+        .copy-btn {
+            background: transparent;
+            color: var(--text-light);
+            padding: 5px;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: transparent;
+            color: var(--primary);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>PI Summarizr</h1>
+            <p class="tagline">Extract key information from your text with AI-powered summarization</p>
+        </header>
+
+        <main>
+            <div class="input-section card">
+                <div class="section-title">
+                    Input Text
+                    <span class="section-stats" id="inputStats">0 words | 0 min read</span>
+                </div>
+                <textarea 
+                    id="inputText" 
+                    placeholder="Enter your text here to summarize (minimum 3 sentences)..." 
+                    aria-label="Input text"
+                ></textarea>
+                
+                <div class="controls">
+                    <div class="control-group">
+                        <label for="sentenceCount">Summary length:</label>
+                        <input 
+                            type="number" 
+                            id="sentenceCount" 
+                            value="3" 
+                            min="1" 
+                            max="20"
+                            aria-label="Number of sentences in summary"
+                        >
+                        <span>sentences</span>
+                        <div class="tooltip">
+                            <span class="icon">ⓘ</span>
+                            <span class="tooltip-text">Choose between 1-20 sentences for your summary</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="algorithm">Algorithm:</label>
+                        <select id="algorithm" aria-label="Summarization algorithm">
+                            <option value="tfidf">TF-IDF</option>
+                            <option value="textrank">TextRank</option>
+                        </select>
+                        <div class="tooltip">
+                            <span class="icon">ⓘ</span>
+                            <span class="tooltip-text">TF-IDF works best for factual text, TextRank for narrative content</span>
+                        </div>
+                    </div>
+                    
+                    <button id="summarizeBtn" onclick="summarize()" disabled>
+                        <span class="spinner" id="btnSpinner"></span>
+                        <span id="btnText">Summarize</span>
+                    </button>
+                </div>
+                <div class="error-message" id="inputError"></div>
+            </div>
+
+            <div class="output-section card">
+                <div class="section-title">
+                    Summary
+                    <span class="section-stats" id="outputStats">0 words | 0% of original</span>
+                </div>
+                <div class="output-container">
+                    <div class="summary-box" id="summary">Your summary will appear here...</div>
+                    <div class="loader-overlay" id="summaryLoader">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <span>Compression:</span>
+                        <strong id="compressionRate">0%</strong>
+                    </div>
+                    <div class="stat-item">
+                        <span>Reading time:</span>
+                        <strong id="readingTime">0 min</strong>
+                    </div>
+                    <button id="copyBtn" class="copy-btn" onclick="copyToClipboard()">Copy summary</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Track input changes and update stats
+        document.getElementById('inputText').addEventListener('input', function() {
+            const text = this.value.trim();
+            updateInputStats(text);
+            validateInput(text);
+        });
+
+        // Update input text statistics
+        function updateInputStats(text) {
+            const wordCount = text ? text.split(/\s+/).filter(word => word.length > 0).length : 0;
+            const readingTimeMin = Math.ceil(wordCount / 200);
+            document.getElementById('inputStats').textContent = 
+                `${wordCount} words | ${readingTimeMin} min read`;
+        }
+
+        // Validate the input text
+        function validateInput(text) {
+            const errorElement = document.getElementById('inputError');
+            const summarizeBtn = document.getElementById('summarizeBtn');
+            const sentences = getSentences(text);
+            
+            if (!text) {
+                errorElement.style.display = 'none';
+                summarizeBtn.disabled = true;
+                return false;
+            }
+            
+            if (sentences.length < 3) {
+                errorElement.textContent = 'Please enter at least 3 complete sentences.';
+                errorElement.style.display = 'block';
+                summarizeBtn.disabled = true;
+                return false;
+            }
+            
+            errorElement.style.display = 'none';
+            summarizeBtn.disabled = false;
+            return true;
+        }
+
+        // Copy summary to clipboard
+        function copyToClipboard() {
+            const summaryText = document.getElementById('summary').innerText;
+            navigator.clipboard.writeText(summaryText).then(() => {
+                const copyBtn = document.getElementById('copyBtn');
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = 'Copied!';
+                
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                }, 2000);
+            });
+        }
+
+        // Split text into sentences
+        function getSentences(text) {
+            if (!text) return [];
+            // Enhanced regex that handles more sentence patterns
+            const sentenceRegex = /[^.!?…]+[.!?…]+/g;
+            return text.match(sentenceRegex) || [];
+        }
+
+        // Tokenize text into words
+        function tokenize(text) {
+            return text.toLowerCase()
+                .replace(/[^\w\s-]/g, '') // Keep hyphens as they can be important
+                .split(/\s+/)
+                .filter(word => word.length > 1); // Filter out single character words
+        }
+
+        // Calculate term frequency (TF)
+        function calculateTF(sentence) {
+            const words = tokenize(sentence);
+            const tf = {};
+            const wordCount = words.length;
+            
+            words.forEach(word => {
+                tf[word] = (tf[word] || 0) + 1;
+            });
+            
+            // Normalize TF by dividing by the number of words in the sentence
+            Object.keys(tf).forEach(word => {
+                tf[word] = tf[word] / wordCount;
+            });
+            
+            return tf;
+        }
+
+        // Calculate inverse document frequency (IDF)
+        function calculateIDF(sentences) {
+            const idf = {};
+            const totalDocs = sentences.length;
+            const documentFrequency = {};
+            
+            // Count document frequency
+            sentences.forEach(sentence => {
+                const words = new Set(tokenize(sentence));
+                words.forEach(word => {
+                    documentFrequency[word] = (documentFrequency[word] || 0) + 1;
+                });
+            });
+            
+            // Calculate IDF for each word
+            Object.keys(documentFrequency).forEach(word => {
+                idf[word] = Math.log(totalDocs / (1 + documentFrequency[word])) + 1; // Add smoothing
+            });
+            
+            return idf;
+        }
+
+        // Calculate sentence score using TF-IDF
+        function calculateTFIDFScore(sentence, idf) {
+            const tf = calculateTF(sentence);
+            let score = 0;
+            
+            Object.keys(tf).forEach(word => {
+                if (idf[word]) {
+                    score += tf[word] * idf[word];
+                }
+            });
+            
+            // Normalize by sentence length to avoid bias toward longer sentences
+            return score / Math.max(1, Object.keys(tf).length);
+        }
+
+        // Implement TextRank algorithm (simplified)
+        function calculateTextRankScores(sentences) {
+            const similarityMatrix = [];
+            const damping = 0.85;
+            const threshold = 0.0001;
+            const iterations = 50;
+            
+            // Initialize similarity matrix
+            for (let i = 0; i < sentences.length; i++) {
+                similarityMatrix[i] = [];
+                for (let j = 0; j < sentences.length; j++) {
+                    similarityMatrix[i][j] = i === j ? 0 : calculateSimilarity(sentences[i], sentences[j]);
+                }
+            }
+            
+            // Initialize scores
+            let scores = Array(sentences.length).fill(1 / sentences.length);
+            
+            // Power iteration
+            for (let iter = 0; iter < iterations; iter++) {
+                const newScores = Array(sentences.length).fill((1 - damping) / sentences.length);
+                
+                for (let i = 0; i < sentences.length; i++) {
+                    for (let j = 0; j < sentences.length; j++) {
+                        if (i !== j) {
+                            // Calculate sum of outbound weights from j
+                            let outSum = 0;
+                            for (let k = 0; k < sentences.length; k++) {
+                                if (j !== k) outSum += similarityMatrix[j][k];
+                            }
+                            
+                            if (outSum > 0) {
+                                newScores[i] += damping * scores[j] * similarityMatrix[j][i] / outSum;
+                            }
+                        }
+                    }
+                }
+                
+                // Check convergence
+                let change = 0;
+                for (let i = 0; i < scores.length; i++) {
+                    change += Math.abs(newScores[i] - scores[i]);
+                }
+                
+                scores = newScores;
+                if (change < threshold) break;
+            }
+            
+            return scores;
+        }
+
+        // Calculate similarity between two sentences
+        function calculateSimilarity(sentence1, sentence2) {
+            const words1 = new Set(tokenize(sentence1));
+            const words2 = new Set(tokenize(sentence2));
+            
+            if (words1.size === 0 || words2.size === 0) return 0;
+            
+            // Find intersection
+            const intersection = [...words1].filter(word => words2.has(word));
+            
+            // Jaccard similarity
+            return intersection.length / (words1.size + words2.size - intersection.length);
+        }
+
+        // Main summarization function
+        function summarize() {
+            const text = document.getElementById('inputText').value.trim();
+            if (!validateInput(text)) return;
+            
+            // Show loading state
+            document.getElementById('summaryLoader').style.display = 'flex';
+            document.getElementById('btnSpinner').style.display = 'inline-block';
+            document.getElementById('btnText').textContent = 'Processing...';
+            document.getElementById('summarizeBtn').disabled = true;
+            
+            // Use setTimeout to prevent UI freezing
+            setTimeout(() => {
+                try {
+                    const sentenceCount = parseInt(document.getElementById('sentenceCount').value);
+                    const algorithm = document.getElementById('algorithm').value;
+                    const sentences = getSentences(text);
+                    
+                    let sentenceScores;
+                    
+                    // Apply selected algorithm
+                    if (algorithm === 'tfidf') {
+                        const idf = calculateIDF(sentences);
+                        sentenceScores = sentences.map((sentence, index) => ({
+                            sentence: sentence.trim(),
+                            score: calculateTFIDFScore(sentence, idf),
+                            index
+                        }));
+                    } else { // textrank
+                        const scores = calculateTextRankScores(sentences);
+                        sentenceScores = sentences.map((sentence, index) => ({
+                            sentence: sentence.trim(),
+                            score: scores[index],
+                            index
+                        }));
+                    }
+                    
+                    // Select top sentences and restore original order
+                    const topSentences = sentenceScores
+                        .sort((a, b) => b.score - a.score)
+                        .slice(0, Math.min(sentenceCount, sentences.length))
+                        .sort((a, b) => a.index - b.index)
+                        .map(item => item.sentence);
+                    
+                    // Display summary
+                    const summaryElement = document.getElementById('summary');
+                    summaryElement.innerHTML = topSentences.join(' ');
+                    
+                    // Update stats
+                    updateOutputStats(text, topSentences.join(' '));
+                    
+                } catch (error) {
+                    console.error('Summarization error:', error);
+                    document.getElementById('summary').innerHTML = 'An error occurred during summarization. Please try again.';
+                } finally {
+                    // Hide loading state
+                    document.getElementById('summaryLoader').style.display = 'none';
+                    document.getElementById('btnSpinner').style.display = 'none';
+                    document.getElementById('btnText').textContent = 'Summarize';
+                    document.getElementById('summarizeBtn').disabled = false;
+                }
+            }, 50); // Small delay to allow UI to update
+        }
+
+        // Update output statistics
+        function updateOutputStats(originalText, summary) {
+            const originalWords = originalText ? originalText.split(/\s+/).filter(word => word.length > 0).length : 0;
+            const summaryWords = summary ? summary.split(/\s+/).filter(word => word.length > 0).length : 0;
+            
+            if (originalWords === 0) return;
+            
+            const compressionRate = Math.round((1 - (summaryWords / originalWords)) * 100);
+            const readingTimeMin = Math.max(1, Math.ceil(summaryWords / 200));
+            
+            document.getElementById('outputStats').textContent = 
+                `${summaryWords} words | ${compressionRate}% compression`;
+            document.getElementById('compressionRate').textContent = `${compressionRate}%`;
+            document.getElementById('readingTime').textContent = `${readingTimeMin} min`;
+        }
+
+        // Initialize the page
+        window.onload = function() {
+            updateInputStats('');
+            validateInput('');
+        };
+    </script>
+</body>
+</html>

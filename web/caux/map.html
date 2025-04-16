@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caux/Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            height: 100vh;
+            width: 100vw;
+            z-index: 1;
+        }
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            max-width: 300px;
+        }
+        .controls button {
+            padding: 8px 16px;
+            margin: 5px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .controls button:disabled {
+            background: #cccccc;
+        }
+        .controls button:hover:not(:disabled) {
+            background: #1976D2;
+        }
+        .selection-box {
+            position: absolute;
+            border: 2px solid #2196F3;
+            background-color: rgba(33, 150, 243, 0.2);
+            pointer-events: none;
+            display: none;
+            z-index: 999;
+        }
+        .selecting {
+            cursor: crosshair !important;
+        }
+        .control-section {
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .control-section:last-child {
+            border-bottom: none;
+        }
+        label {
+            display: block;
+            margin: 5px 0;
+        }
+        select, input {
+            width: 100%;
+            padding: 5px;
+            margin: 5px 0;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        .search-container {
+            margin-top: 5px;
+        }
+        #searchResults {
+            max-height: 150px;
+            overflow-y: auto;
+            background: white;
+            border-radius: 4px;
+            margin-top: 5px;
+            display: none;
+        }
+        .search-result {
+            padding: 8px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        .search-result:hover {
+            background: #f0f0f0;
+        }
+        .toolbar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            display: flex;
+            padding: 5px;
+        }
+        .toolbar button {
+            padding: 8px 12px;
+            margin: 0 5px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        .toolbar button i {
+            margin-right: 5px;
+        }
+        .coordinates-display {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .toggle-btn {
+            position: fixed;
+            top: 20px;
+            right: 330px;
+            z-index: 1000;
+            background: white;
+            padding: 8px;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            cursor: pointer;
+        }
+        .hidden {
+            display: none;
+        }
+        #loadingIndicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            z-index: 2000;
+            display: none;
+        }
+        .marker-options {
+            margin-top: 10px;
+        }
+        .size-selector {
+            display: flex;
+            align-items: center;
+            margin-top: 5px;
+        }
+        .size-selector label {
+            margin-right: 10px;
+            flex: 0 0 80px;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    
+    <div class="toggle-btn" id="toggleControls">☰</div>
+    
+    <div class="controls" id="controlPanel">
+        <div class="control-section">
+            <h3>Map Options</h3>
+            <label for="mapStyle">Map Style:</label>
+            <select id="mapStyle">
+                <option value="osm">OpenStreetMap</option>
+                <option value="satellite">Satellite</option>
+                <option value="terrain">Terrain</option>
+                <option value="dark">Dark Mode</option>
+            </select>
+            
+            <div class="search-container">
+                <label for="searchInput">Search Location:</label>
+                <input type="text" id="searchInput" placeholder="Enter location name">
+                <div id="searchResults"></div>
+            </div>
+        </div>
+        
+        <div class="control-section">
+            <h3>Screenshot Tools</h3>
+            <button id="startSelection">Start Selection</button>
+            <button id="capture" disabled>Capture Selection</button>
+            
+            <div class="size-selector">
+                <label for="formatSelect">Format:</label>
+                <select id="formatSelect">
+                    <option value="png">PNG</option>
+                    <option value="jpg">JPG</option>
+                </select>
+            </div>
+            
+            <div class="size-selector">
+                <label for="qualitySelect">Quality:</label>
+                <select id="qualitySelect">
+                    <option value="1">High</option>
+                    <option value="0.8">Medium</option>
+                    <option value="0.5">Low</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="control-section">
+            <h3>Tools</h3>
+            <button id="addMarker">Add Marker</button>
+            <button id="measureDistance">Measure Distance</button>
+            <button id="clearAll">Clear All</button>
+            
+            <div class="marker-options hidden" id="markerOptions">
+                <label for="markerTitle">Marker Title:</label>
+                <input type="text" id="markerTitle" placeholder="Enter marker title">
+                <label for="markerColor">Color:</label>
+                <select id="markerColor">
+                    <option value="blue">Blue</option>
+                    <option value="red">Red</option>
+                    <option value="green">Green</option>
+                    <option value="orange">Orange</option>
+                    <option value="purple">Purple</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="toolbar" id="toolbar">
+        <button id="zoomIn" title="Zoom In">+ Zoom In</button>
+        <button id="zoomOut" title="Zoom Out">- Zoom Out</button>
+        <button id="locate" title="My Location">📍 My Location</button>
+        <button id="fullscreen" title="Fullscreen">⤢ Fullscreen</button>
+    </div>
+    
+    <div class="coordinates-display" id="coordinates">Lat: 0.000, Lng: 0.000</div>
+    
+    <div id="selectionBox" class="selection-box"></div>
+    
+    <div id="loadingIndicator">Processing... Please wait</div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script>
+        // Initialize map
+        const map = L.map('map').setView([40, -74], 10);
+        let currentTileLayer;
+        let markers = [];
+        let measurePoints = [];
+        let measureLine = null;
+        let isMarkerMode = false;
+        let isMeasureMode = false;
+        
+        // Map Layers
+        const mapLayers = {
+            osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap contributors'
+            }),
+            satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                maxZoom: 19,
+                attribution: 'Imagery © Esri'
+            }),
+            terrain: L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}{r}.png', {
+                maxZoom: 18,
+                attribution: 'Map tiles by Stamen Design'
+            }),
+            dark: L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
+                maxZoom: 20,
+                attribution: '© Stadia Maps'
+            })
+        };
+        
+        // Set default map layer
+        currentTileLayer = mapLayers.osm;
+        currentTileLayer.addTo(map);
+        
+        // Selection variables
+        let isSelecting = false;
+        let startPoint = null;
+        const selectionBox = document.getElementById('selectionBox');
+        const startBtn = document.getElementById('startSelection');
+        const captureBtn = document.getElementById('capture');
+        const mapContainer = document.getElementById('map');
+        const coordinates = document.getElementById('coordinates');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        
+        // UI Elements
+        const mapStyleSelect = document.getElementById('mapStyle');
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        const toggleControls = document.getElementById('toggleControls');
+        const controlPanel = document.getElementById('controlPanel');
+        const addMarkerBtn = document.getElementById('addMarker');
+        const measureDistanceBtn = document.getElementById('measureDistance');
+        const clearAllBtn = document.getElementById('clearAll');
+        const markerOptions = document.getElementById('markerOptions');
+        const markerTitle = document.getElementById('markerTitle');
+        const markerColor = document.getElementById('markerColor');
+        const formatSelect = document.getElementById('formatSelect');
+        const qualitySelect = document.getElementById('qualitySelect');
+        
+        // Toolbar buttons
+        const zoomInBtn = document.getElementById('zoomIn');
+        const zoomOutBtn = document.getElementById('zoomOut');
+        const locateBtn = document.getElementById('locate');
+        const fullscreenBtn = document.getElementById('fullscreen');
+        
+        // Map style change
+        mapStyleSelect.addEventListener('change', function() {
+            const selectedStyle = this.value;
+            
+            if (currentTileLayer) {
+                map.removeLayer(currentTileLayer);
+            }
+            
+            currentTileLayer = mapLayers[selectedStyle];
+            currentTileLayer.addTo(map);
+        });
+        
+        // Toggle controls panel
+        toggleControls.addEventListener('click', function() {
+            controlPanel.classList.toggle('hidden');
+        });
+        
+        // Search functionality
+        searchInput.addEventListener('input', debounce(function() {
+            const query = this.value.trim();
+            if (query.length < 3) {
+                searchResults.style.display = 'none';
+                return;
+            }
+            
+            // Nominatim search API
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    searchResults.innerHTML = '';
+                    if (data.length > 0) {
+                        data.slice(0, 5).forEach(result => {
+                            const div = document.createElement('div');
+                            div.className = 'search-result';
+                            div.textContent = result.display_name;
+                            div.addEventListener('click', function() {
+                                map.setView([result.lat, result.lon], 13);
+                                searchResults.style.display = 'none';
+                                searchInput.value = result.display_name;
+                            });
+                            searchResults.appendChild(div);
+                        });
+                        searchResults.style.display = 'block';
+                    } else {
+                        searchResults.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Search error:', error);
+                });
+        }, 500));
+        
+        // Start selection button
+        startBtn.addEventListener('click', () => {
+            isSelecting = !isSelecting;
+            startBtn.textContent = isSelecting ? 'Cancel Selection' : 'Start Selection';
+            mapContainer.classList.toggle('selecting');
+            map.dragging.disable();
+            map.scrollWheelZoom.disable();
+            captureBtn.disabled = true;
+            
+            // Disable other modes when selecting
+            if (isSelecting) {
+                exitMarkerMode();
+                exitMeasureMode();
+            } else {
+                selectionBox.style.display = 'none';
+            }
+        });
+
+        // Mouse down event
+        map.on('mousedown', (e) => {
+            if (!isSelecting) return;
+            startPoint = e.containerPoint;
+            selectionBox.style.display = 'block';
+            selectionBox.style.left = startPoint.x + 'px';
+            selectionBox.style.top = startPoint.y + 'px';
+            selectionBox.style.width = '0';
+            selectionBox.style.height = '0';
+        });
+
+        // Mouse move event
+        map.on('mousemove', (e) => {
+            // Update coordinates display
+            const latLng = e.latlng;
+            coordinates.innerHTML = `Lat: ${latLng.lat.toFixed(6)}, Lng: ${latLng.lng.toFixed(6)}`;
+            
+            if (!isSelecting || !startPoint) return;
+            const currentPoint = e.containerPoint;
+            const left = Math.min(startPoint.x, currentPoint.x);
+            const top = Math.min(startPoint.y, currentPoint.y);
+            const width = Math.abs(currentPoint.x - startPoint.x);
+            const height = Math.abs(currentPoint.y - startPoint.y);
+
+            selectionBox.style.left = left + 'px';
+            selectionBox.style.top = top + 'px';
+            selectionBox.style.width = width + 'px';
+            selectionBox.style.height = height + 'px';
+        });
+
+        // Mouse up event
+        map.on('mouseup', () => {
+            if (!isSelecting) return;
+            isSelecting = false;
+            mapContainer.classList.remove('selecting');
+            map.dragging.enable();
+            map.scrollWheelZoom.enable();
+            startBtn.textContent = 'Start Selection';
+            captureBtn.disabled = false;
+        });
+
+        // Capture button
+        captureBtn.addEventListener('click', async () => {
+            if (selectionBox.style.display === 'none') return;
+            
+            const box = selectionBox.getBoundingClientRect();
+            if (box.width < 10 || box.height < 10) {
+                alert('Selection area is too small. Please make a larger selection.');
+                return;
+            }
+            
+            loadingIndicator.style.display = 'block';
+            
+            setTimeout(async () => {
+                try {
+                    const canvas = await html2canvas(document.body, {
+                        x: box.left,
+                        y: box.top,
+                        width: box.width,
+                        height: box.height,
+                        useCORS: true,
+                        logging: false
+                    });
+                    
+                    const format = formatSelect.value;
+                    const quality = parseFloat(qualitySelect.value);
+                    
+                    const link = document.createElement('a');
+                    link.download = `map-screenshot-${Date.now()}.${format}`;
+                    link.href = canvas.toDataURL(`image/${format}`, quality);
+                    link.click();
+                    
+                    selectionBox.style.display = 'none';
+                    captureBtn.disabled = true;
+                } catch (error) {
+                    console.error('Screenshot error:', error);
+                    alert('Error creating screenshot. Please try again.');
+                } finally {
+                    loadingIndicator.style.display = 'none';
+                }
+            }, 200);
+        });
+        
+        // Add marker functionality
+        addMarkerBtn.addEventListener('click', () => {
+            isMarkerMode = !isMarkerMode;
+            
+            if (isMarkerMode) {
+                exitSelectionMode();
+                exitMeasureMode();
+                addMarkerBtn.textContent = 'Cancel Marker';
+                markerOptions.classList.remove('hidden');
+                map.getContainer().style.cursor = 'crosshair';
+            } else {
+                exitMarkerMode();
+            }
+        });
+        
+        function exitMarkerMode() {
+            isMarkerMode = false;
+            addMarkerBtn.textContent = 'Add Marker';
+            markerOptions.classList.add('hidden');
+            map.getContainer().style.cursor = '';
+        }
+        
+        map.on('click', function(e) {
+            if (isMarkerMode) {
+                const title = markerTitle.value || 'Marker';
+                const color = markerColor.value;
+                
+                const markerIcon = L.divIcon({
+                    className: 'custom-marker',
+                    html: `<div style="background-color: ${color}; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white;"></div>`,
+                    iconSize: [16, 16],
+                    iconAnchor: [8, 8]
+                });
+                
+                const marker = L.marker(e.latlng, {
+                    draggable: true,
+                    icon: markerIcon
+                }).addTo(map);
+                
+                marker.bindPopup(`<b>${title}</b><br>Lat: ${e.latlng.lat.toFixed(6)}<br>Lng: ${e.latlng.lng.toFixed(6)}`);
+                markers.push(marker);
+                
+                // Exit marker mode after placing a marker
+                exitMarkerMode();
+            } else if (isMeasureMode) {
+                const point = e.latlng;
+                measurePoints.push(point);
+                
+                // Create a marker at the clicked point
+                const marker = L.circleMarker(point, {
+                    radius: 5,
+                    color: '#FF5722',
+                    fillColor: '#FF5722',
+                    fillOpacity: 1
+                }).addTo(map);
+                
+                markers.push(marker);
+                
+                // If we have at least 2 points, draw or update the line
+                if (measurePoints.length >= 2) {
+                    if (measureLine) {
+                        map.removeLayer(measureLine);
+                    }
+                    
+                    measureLine = L.polyline(measurePoints, {
+                        color: '#FF5722',
+                        weight: 3,
+                        opacity: 0.7,
+                        dashArray: '5, 5'
+                    }).addTo(map);
+                    
+                    // Calculate total distance
+                    let totalDistance = 0;
+                    for (let i = 1; i < measurePoints.length; i++) {
+                        totalDistance += measurePoints[i-1].distanceTo(measurePoints[i]);
+                    }
+                    
+                    // Convert to appropriate units and display
+                    let distanceText;
+                    if (totalDistance >= 1000) {
+                        distanceText = `${(totalDistance / 1000).toFixed(2)} km`;
+                    } else {
+                        distanceText = `${totalDistance.toFixed(0)} m`;
+                    }
+                    
+                    // Create or update a popup with the distance
+                    measureLine.bindPopup(distanceText).openPopup();
+                }
+            }
+        });
+        
+        // Measure distance functionality
+        measureDistanceBtn.addEventListener('click', () => {
+            isMeasureMode = !isMeasureMode;
+            
+            if (isMeasureMode) {
+                exitSelectionMode();
+                exitMarkerMode();
+                measureDistanceBtn.textContent = 'Cancel Measurement';
+                map.getContainer().style.cursor = 'crosshair';
+                
+                // Clear previous measurement
+                measurePoints = [];
+                if (measureLine) {
+                    map.removeLayer(measureLine);
+                    measureLine = null;
+                }
+            } else {
+                exitMeasureMode();
+            }
+        });
+        
+        function exitMeasureMode() {
+            isMeasureMode = false;
+            measureDistanceBtn.textContent = 'Measure Distance';
+            map.getContainer().style.cursor = '';
+        }
+        
+        function exitSelectionMode() {
+            if (isSelecting) {
+                isSelecting = false;
+                mapContainer.classList.remove('selecting');
+                map.dragging.enable();
+                map.scrollWheelZoom.enable();
+                startBtn.textContent = 'Start Selection';
+                selectionBox.style.display = 'none';
+            }
+        }
+        
+        // Clear all markers and measurements
+        clearAllBtn.addEventListener('click', () => {
+            // Clear markers
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+            
+            // Clear measurements
+            measurePoints = [];
+            if (measureLine) {
+                map.removeLayer(measureLine);
+                measureLine = null;
+            }
+            
+            // Clear selection
+            selectionBox.style.display = 'none';
+            captureBtn.disabled = true;
+        });
+        
+        // Toolbar functionality
+        zoomInBtn.addEventListener('click', () => map.zoomIn());
+        zoomOutBtn.addEventListener('click', () => map.zoomOut());
+        
+        locateBtn.addEventListener('click', () => {
+            map.locate({setView: true, maxZoom: 16});
+        });
+        
+        map.on('locationfound', function(e) {
+            // Add a marker for the user's location
+            const locationMarker = L.marker(e.latlng).addTo(map)
+                .bindPopup('Your location').openPopup();
+            markers.push(locationMarker);
+            
+            // Add accuracy circle
+            const accuracyCircle = L.circle(e.latlng, {
+                radius: e.accuracy / 2,
+                color: 'blue',
+                fillColor: '#3388ff',
+                fillOpacity: 0.2
+            }).addTo(map);
+            markers.push(accuracyCircle);
+        });
+        
+        map.on('locationerror', function(e) {
+            alert('Location access denied or unavailable. Please check your browser settings.');
+        });
+        
+        // Fullscreen functionality
+        let isFullscreen = false;
+        fullscreenBtn.addEventListener('click', () => {
+            if (!isFullscreen) {
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen();
+                } else if (document.documentElement.mozRequestFullScreen) {
+                    document.documentElement.mozRequestFullScreen();
+                } else if (document.documentElement.webkitRequestFullscreen) {
+                    document.documentElement.webkitRequestFullscreen();
+                } else if (document.documentElement.msRequestFullscreen) {
+                    document.documentElement.msRequestFullscreen();
+                }
+                fullscreenBtn.textContent = '⤓ Exit Fullscreen';
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+                fullscreenBtn.textContent = '⤢ Fullscreen';
+            }
+            isFullscreen = !isFullscreen;
+        });
+        
+        // Handle fullscreen change
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+        document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+        
+        function handleFullscreenChange() {
+            isFullscreen = !!document.fullscreenElement;
+            fullscreenBtn.textContent = isFullscreen ? '⤓ Exit Fullscreen' : '⤢ Fullscreen';
+        }
+        
+        // Utility function for debouncing
+        function debounce(func, wait) {
+            let timeout;
+            return function() {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, arguments), wait);
+            };
+        }
+    </script>
+</body>
+</html>

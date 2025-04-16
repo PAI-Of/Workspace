@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Focux-Todo</title>
+    <style>
+        :root {
+            --primary-color: #f1a746;
+            --secondary-color: #e99324;
+            --accent-color: #4CAF50;
+            --bg-color: #deb887;
+            --text-color: #333;
+            --completed-color: #888;
+            --card-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            --border-radius: 8px;
+            --priority-high: #ff5252;
+            --priority-medium: #ffb142;
+            --priority-low: #78e08f;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--text-color);
+            margin-bottom: 20px;
+        }
+
+        #app {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            padding: 25px;
+        }
+
+        .todo-input {
+            display: flex;
+            margin-bottom: 20px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .todo-input input, .todo-input select {
+            flex-grow: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            min-width: 200px;
+        }
+
+        button {
+            padding: 10px 15px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .filter-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-container button {
+            background-color: var(--secondary-color);
+            border: none;
+            padding: 8px 15px;
+            border-radius: var(--border-radius);
+        }
+
+        .filter-container button.active {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .todo-list {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .todo-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            transition: all 0.3s;
+            border-radius: var(--border-radius);
+            margin-bottom: 8px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .todo-item:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transform: translateY(-2px);
+        }
+
+        .todo-item input[type="checkbox"] {
+            margin-right: 15px;
+            transform: scale(1.2);
+        }
+
+        .todo-item .todo-text {
+            flex-grow: 1;
+            font-size: 16px;
+        }
+
+        .todo-item.completed .todo-text {
+            text-decoration: line-through;
+            color: var(--completed-color);
+        }
+
+        .priority-high { 
+            border-left: 4px solid var(--priority-high); 
+        }
+        
+        .priority-medium { 
+            border-left: 4px solid var(--priority-medium); 
+        }
+        
+        .priority-low { 
+            border-left: 4px solid var(--priority-low); 
+        }
+
+        .priority-tag {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-right: 10px;
+            color: white;
+        }
+
+        .priority-tag.high {
+            background-color: var(--priority-high);
+        }
+
+        .priority-tag.medium {
+            background-color: var(--priority-medium);
+        }
+
+        .priority-tag.low {
+            background-color: var(--priority-low);
+        }
+
+        .todo-item .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .todo-item .actions button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 5px;
+            color: var(--secondary-color);
+        }
+
+        .todo-item .actions button:hover {
+            color: var(--accent-color);
+            transform: scale(1.2);
+        }
+
+        #statsContainer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 16px;
+            background-color: var(--primary-color);
+            padding: 10px;
+            border-radius: var(--border-radius);
+            color: white;
+        }
+
+        .no-todos {
+            text-align: center;
+            padding: 20px;
+            color: var(--completed-color);
+            font-style: italic;
+        }
+
+        .import-export {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            gap: 15px;
+        }
+
+        .import-export button {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 10px 20px;
+        }
+
+        .import-export button i {
+            font-size: 18px;
+        }
+
+        .date-info {
+            font-size: 12px;
+            color: var(--completed-color);
+            margin-top: 5px;
+        }
+
+        .search-container {
+            margin-bottom: 20px;
+        }
+
+        .search-container input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+        }
+
+        #importFileInput {
+            display: none;
+        }
+
+        .todo-meta {
+            display: flex;
+            flex-direction: column;
+            margin-right: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .todo-input {
+                flex-direction: column;
+            }
+            
+            .todo-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .todo-item .actions {
+                margin-top: 10px;
+                align-self: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Focux-Todo</h1>
+    <div id="app">
+        <div class="todo-input">
+            <input type="text" id="todoInput" placeholder="Enter a new task">
+            <select id="prioritySelect">
+                <option value="low">Low Priority</option>
+                <option value="medium">Medium Priority</option>
+                <option value="high">High Priority</option>
+            </select>
+            <button onclick="addTodo()">Add Task</button>
+        </div>
+
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Search tasks..." oninput="searchTodos()">
+        </div>
+
+        <div class="filter-container">
+            <button onclick="filterTodos('all')" class="active">All</button>
+            <button onclick="filterTodos('active')">Active</button>
+            <button onclick="filterTodos('completed')">Completed</button>
+            <button onclick="sortTodos('priority')">Sort by Priority</button>
+            <button onclick="sortTodos('date')">Sort by Date</button>
+        </div>
+
+        <ul id="todoList" class="todo-list"></ul>
+        <div id="noTodos" class="no-todos" style="display: none;">No tasks found</div>
+
+        <div id="statsContainer"></div>
+
+        <div class="import-export">
+            <input type="file" id="importFileInput" accept=".fcxtodo" onchange="importTodos()">
+            <button onclick="document.getElementById('importFileInput').click()">
+                📥 Import Tasks
+            </button>
+            <button onclick="exportTodos()">
+                📤 Export Tasks
+            </button>
+            <button onclick="clearAllTodos()">
+                🗑️ Clear All
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let todos = JSON.parse(localStorage.getItem('todos')) || [];
+        let currentFilter = 'all';
+        let currentSort = 'priority';
+        let searchQuery = '';
+
+        function saveTodos() {
+            localStorage.setItem('todos', JSON.stringify(todos));
+            renderTodos();
+            updateStats();
+        }
+
+        function addTodo() {
+            const todoInput = document.getElementById('todoInput');
+            const prioritySelect = document.getElementById('prioritySelect');
+            
+            if (todoInput.value.trim() === '') return;
+
+            const newTodo = {
+                id: Date.now(),
+                text: todoInput.value.trim(),
+                completed: false,
+                priority: prioritySelect.value,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            todos.push(newTodo);
+            saveTodos();
+            todoInput.value = '';
+        }
+
+        function toggleTodo(id) {
+            todos = todos.map(todo => {
+                if (todo.id === id) {
+                    return {...todo, completed: !todo.completed, updatedAt: new Date().toISOString()};
+                }
+                return todo;
+            });
+            saveTodos();
+        }
+
+        function deleteTodo(id) {
+            todos = todos.filter(todo => todo.id !== id);
+            saveTodos();
+        }
+
+        function editTodo(id) {
+            const todo = todos.find(t => t.id === id);
+            const newText = prompt('Edit task:', todo.text);
+            if (newText !== null && newText.trim() !== '') {
+                todo.text = newText.trim();
+                todo.updatedAt = new Date().toISOString();
+                saveTodos();
+            }
+        }
+
+        function changePriority(id) {
+            const todo = todos.find(t => t.id === id);
+            const priorities = ['low', 'medium', 'high'];
+            const currentIndex = priorities.indexOf(todo.priority);
+            const nextIndex = (currentIndex + 1) % priorities.length;
+            
+            todo.priority = priorities[nextIndex];
+            todo.updatedAt = new Date().toISOString();
+            saveTodos();
+        }
+
+        function filterTodos(filter) {
+            currentFilter = filter;
+            
+            document.querySelectorAll('.filter-container button')
+                .forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            renderTodos();
+        }
+
+        function sortTodos(sortType) {
+            currentSort = sortType;
+            renderTodos();
+        }
+
+        function searchTodos() {
+            searchQuery = document.getElementById('searchInput').value.toLowerCase();
+            renderTodos();
+        }
+
+        function renderTodos() {
+            const todoList = document.getElementById('todoList');
+            const noTodos = document.getElementById('noTodos');
+            todoList.innerHTML = '';
+
+            // Apply filters
+            let filteredTodos = todos.filter(todo => {
+                // First apply the active/completed filter
+                if (currentFilter === 'active') return !todo.completed;
+                if (currentFilter === 'completed') return todo.completed;
+                return true;
+            }).filter(todo => {
+                // Then apply search filter
+                if (!searchQuery) return true;
+                return todo.text.toLowerCase().includes(searchQuery);
+            });
+
+            // Apply sorting
+            if (currentSort === 'priority') {
+                const priorityOrder = { high: 3, medium: 2, low: 1 };
+                filteredTodos.sort((a, b) => priorityOrder[b.priority] - priorityOrder[a.priority]);
+            } else if (currentSort === 'date') {
+                filteredTodos.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            }
+
+            if (filteredTodos.length === 0) {
+                noTodos.style.display = 'block';
+            } else {
+                noTodos.style.display = 'none';
+                
+                filteredTodos.forEach(todo => {
+                    const li = document.createElement('li');
+                    li.className = `todo-item ${todo.completed ? 'completed' : ''} priority-${todo.priority}`;
+                    
+                    // Format dates
+                    const createdDate = new Date(todo.createdAt);
+                    const formattedCreatedDate = createdDate.toLocaleDateString() + ' ' + 
+                                              createdDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    
+                    // Priority label
+                    const priorityLabel = todo.priority.charAt(0).toUpperCase() + todo.priority.slice(1);
+                    
+                    li.innerHTML = `
+                        <input 
+                            type="checkbox" 
+                            ${todo.completed ? 'checked' : ''} 
+                            onchange="toggleTodo(${todo.id})"
+                        >
+                        <div class="todo-meta">
+                            <span class="todo-text">${todo.text}</span>
+                            <span class="date-info">Created: ${formattedCreatedDate}</span>
+                        </div>
+                        <span class="priority-tag ${todo.priority}">${priorityLabel}</span>
+                        <div class="actions">
+                            <button onclick="changePriority(${todo.id})" title="Change Priority">🔄</button>
+                            <button onclick="editTodo(${todo.id})" title="Edit Task">✏️</button>
+                            <button onclick="deleteTodo(${todo.id})" title="Delete Task">🗑️</button>
+                        </div>
+                    `;
+                    
+                    todoList.appendChild(li);
+                });
+            }
+        }
+
+        function updateStats() {
+            const statsContainer = document.getElementById('statsContainer');
+            const totalTodos = todos.length;
+            const completedTodos = todos.filter(todo => todo.completed).length;
+            const activeTodos = totalTodos - completedTodos;
+            const highPriorityActive = todos.filter(todo => !todo.completed && todo.priority === 'high').length;
+
+            statsContainer.innerHTML = `
+                <strong>Total Tasks:</strong> ${totalTodos} | 
+                <strong>Active:</strong> ${activeTodos} | 
+                <strong>Completed:</strong> ${completedTodos} | 
+                <strong>High Priority:</strong> ${highPriorityActive}
+            `;
+        }
+
+        function clearAllTodos() {
+            if (confirm('Are you sure you want to delete all tasks?')) {
+                todos = [];
+                saveTodos();
+            }
+        }
+
+        function exportTodos() {
+            // Create the export data
+            const exportData = JSON.stringify(todos, null, 2);
+            
+            // Create a Blob with the data
+            const blob = new Blob([exportData], {type: 'application/json'});
+            
+            // Create a download link
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            
+            // Generate filename with current date
+            const date = new Date();
+            const formattedDate = date.toISOString().split('T')[0];
+            a.download = `todo-list-${formattedDate}.fcxtodo`;
+            
+            // Trigger download
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function importTodos() {
+            const fileInput = document.getElementById('importFileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) return;
+            
+            // Check if it's a .fcxtodo file
+            if (!file.name.endsWith('.fcxtodo')) {
+                alert('Please select a valid .fcxtodo file');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedTodos = JSON.parse(e.target.result);
+                    
+                    // Validate the imported data
+                    if (!Array.isArray(importedTodos)) {
+                        throw new Error('Invalid todo list format');
+                    }
+                    
+                    // Confirm merge or replace
+                    const action = confirm('Do you want to merge with existing tasks? Click OK to merge or Cancel to replace all tasks.');
+                    
+                    if (action) {
+                        // Merge by adding non-duplicate tasks
+                        const existingIds = new Set(todos.map(todo => todo.id));
+                        const newTodos = importedTodos.filter(todo => !existingIds.has(todo.id));
+                        todos = [...todos, ...newTodos];
+                    } else {
+                        // Replace all tasks
+                        todos = importedTodos;
+                    }
+                    
+                    saveTodos();
+                    alert('Tasks imported successfully!');
+                    
+                } catch (error) {
+                    alert('Error importing tasks: ' + error.message);
+                }
+                
+                // Reset file input
+                fileInput.value = '';
+            };
+            
+            reader.readAsText(file);
+        }
+
+        // Handle "Enter" key in todo input
+        document.getElementById('todoInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addTodo();
+            }
+        });
+
+        // Initial render
+        renderTodos();
+        updateStats();
+    </script>
+</body>
+</html>

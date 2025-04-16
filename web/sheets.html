@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="img/sheet.png">
+    <title>pSheets</title>
+    <style>
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(135deg, #f5f9f5 0%, #e8f5e9 100%);
+}
+
+.container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: white;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    border-top: 5px solid #2e7d32;
+    transition: transform 0.3s ease-in-out;
+}
+
+h1 {
+    color: #2e7d32;
+    text-align: center;
+    margin-top: 0;
+    font-size: 2.2em;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.toolbar {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    padding: 12px;
+    background: linear-gradient(90deg, #e8f5e9 0%, #c8e6c9 100%);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: background-color 0.3s ease-in-out;
+}
+
+.toolbar-section {
+    display: flex;
+    gap: 12px;
+}
+
+button {
+    background: linear-gradient(to bottom, #4caf50 0%, #49c24f 100%);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    font-weight: 500;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    will-change: transform, background-color;
+}
+
+button:hover {
+    background: linear-gradient(to bottom, #388e3c 0%, #2e7d32 100%);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px);
+}
+
+button:disabled {
+    background: linear-gradient(to bottom, #a5d6a7 0%, #81c784 100%);
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+input[type="text"] {
+    padding: 8px 12px;
+    border: 1px solid #bdbdbd;
+    border-radius: 6px;
+    width: 150px;
+    transition: border-color 0.3s ease-in-out;
+}
+
+input[type="text"]:focus {
+    border-color: #4caf50;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+    outline: none;
+}
+
+input[type="file"] {
+    display: none;
+}
+
+.spreadsheet-container {
+    overflow-x: auto;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease-in-out;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    table-layout: fixed;
+}
+
+th {
+    background: linear-gradient(to bottom, #4caf50 0%, #388e3c 100%);
+    color: white;
+    font-weight: bold;
+    text-align: center;
+    padding: 8px 4px;
+    position: sticky;
+    top: 0;
+    will-change: background-color;
+}
+
+td {
+    border: 1px solid #e0e0e0;
+    padding: 0;
+    height: 28px;
+    position: relative;
+}
+
+.cell-input {
+    width: 100%;
+    height: 100%;
+    padding: 4px 6px;
+    box-sizing: border-box;
+    border: none;
+    outline: none;
+    margin: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 14px;
+}
+
+.cell-input:focus {
+    background-color: #e8f5e9;
+    box-shadow: inset 0 0 0 2px #4caf50;
+}
+
+.active-cell {
+    background-color: #e8f5e9;
+    box-shadow: inset 0 0 0 2px #4caf50;
+}
+
+.column-header {
+    background: linear-gradient(to bottom, #81c784 0%, #66bb6a 100%);
+    color: white;
+    font-weight: bold;
+    text-align: center;
+    user-select: none;
+    width: 100px;
+    padding: 6px 0;
+}
+
+.row-header {
+    background: linear-gradient(to bottom, #81c784 0%, #66bb6a 100%);
+    color: white;
+    font-weight: bold;
+    text-align: center;
+    width: 40px;
+    user-select: none;
+    padding: 0;
+}
+
+.status-bar {
+    padding: 12px;
+    background: linear-gradient(90deg, #e8f5e9 0%, #c8e6c9 100%);
+    border-radius: 6px;
+    color: #2e7d32;
+    font-weight: bold;
+    text-align: center;
+    min-height: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.formula-bar {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    gap: 10px;
+    padding: 12px;
+    background: linear-gradient(90deg, #f1f8e9 0%, #e8f5e9 100%);
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.formula-bar label {
+    font-weight: bold;
+    color: #2e7d32;
+}
+
+.formula-bar input {
+    flex-grow: 1;
+    padding: 8px 12px;
+    border: 1px solid #bdbdbd;
+    border-radius: 6px;
+    transition: border-color 0.3s ease-in-out;
+}
+
+.formula-bar input:focus {
+    border-color: #4caf50;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+    outline: none;
+}
+
+#active-cell-label {
+    background-color: #f1f8e9;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    min-width: 40px;
+    text-align: center;
+}
+
+.app-footer {
+    text-align: center;
+    margin-top: 20px;
+    color: #757575;
+    font-size: 0.85em;
+}
+
+/* Responsive Design for Mobile */
+@media (max-width: 768px) {
+    .container {
+        margin: 10px;
+        padding: 15px;
+    }
+
+    .toolbar {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    button {
+        width: 100%;
+        padding: 10px;
+    }
+
+    input[type="text"] {
+        width: 100%;
+    }
+
+    .spreadsheet-container {
+        overflow-x: auto;
+        max-width: 100%;
+    }
+
+    table {
+        font-size: 14px;
+    }
+
+    .column-header, .row-header {
+        font-size: 12px;
+    }
+}
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>pSheets</h1>
+        
+        <div class="toolbar">
+            <div class="toolbar-section">
+                <button id="new-btn">New</button>
+                <input type="file" id="import-file" accept=".csv" />
+                <button id="import-btn">Import CSV</button>
+                <input type="file" id="import-xlsx" accept=".xlsx" />
+                <button id="import-btn-xlsx">Import XLSX</button>
+            </div>
+            <div class="toolbar-section">
+                <button id="export-csv-btn">Export CSV</button>
+                <button id="export-xlsx-btn">Export XLSX</button>
+                <button id="add-row-btn">Add Row</button>
+                <button id="add-col-btn">Add Column</button>
+                <button id="del-row-btn">Delete Row</button>
+                <button id="del-col-btn">Delete Column</button>
+            </div>
+        </div>
+        
+        <div class="formula-bar">
+            <label>Cell:</label>
+            <span id="active-cell-label">-</span>
+            <label>Formula:</label>
+            <input type="text" id="formula-input" placeholder="Enter value or formula" />
+        </div>
+        
+        <div class="spreadsheet-container">
+            <table id="spreadsheet">
+                <thead>
+                    <tr>
+                        <th class="row-header"></th>
+                        <th class="column-header">A</th>
+                        <th class="column-header">B</th>
+                        <th class="column-header">C</th>
+                        <th class="column-header">D</th>
+                        <th class="column-header">E</th>
+                    </tr>
+                </thead>
+                <tbody id="spreadsheet-body">
+                    <!-- Rows will be added dynamically -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="status-bar" id="status-bar"></div>
+        
+        <div class="app-footer">
+            pSheets v1.1.0 | Powered Intelligence, India
+        </div>
+    </div>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <script>
+        // Global variables
+        const DEFAULT_ROWS = 15;
+        const DEFAULT_COLS = 8;
+        let currentData = [];
+        let activeCellCoords = { row: null, col: null };
+        let activeCellElement = null;
+        let activeCell = null;
+        let columnLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+        // DOM elements
+        const spreadsheetBody = document.getElementById('spreadsheet-body');
+        const spreadsheetTable = document.getElementById('spreadsheet');
+        const headerRow = document.querySelector('#spreadsheet thead tr');
+        const newBtn = document.getElementById('new-btn');
+        const importBtn = document.getElementById('import-btn');
+        const importBtnXlsx = document.getElementById('import-btn-xlsx');
+        const importFile = document.getElementById('import-file');
+        const importXlsx = document.getElementById('import-xlsx');
+        const exportCsvBtn = document.getElementById('export-csv-btn');
+        const exportXlsxBtn = document.getElementById('export-xlsx-btn');
+        const addRowBtn = document.getElementById('add-row-btn');
+        const addColBtn = document.getElementById('add-col-btn');
+        const delRowBtn = document.getElementById('del-row-btn');
+        const delColBtn = document.getElementById('del-col-btn');
+        const statusBar = document.getElementById('status-bar');
+        const formulaInput = document.getElementById('formula-input');
+        const activeCellLabel = document.getElementById('active-cell-label');
+
+        // Initialize spreadsheet
+        function initializeSpreadsheet() {
+            // Clear existing data
+            currentData = [];
+            
+            // Create initial rows and columns
+            for (let i = 0; i < DEFAULT_ROWS; i++) {
+                const row = [];
+                for (let j = 0; j < DEFAULT_COLS; j++) {
+                    row.push('');
+                }
+                currentData.push(row);
+            }
+            
+            renderSpreadsheet();
+            showStatus('New spreadsheet created');
+        }
+
+        // Render the spreadsheet based on current data
+        function renderSpreadsheet() {
+            // Clear table body
+            spreadsheetBody.innerHTML = '';
+            
+            // Render rows
+            for (let i = 0; i < currentData.length; i++) {
+                const tr = document.createElement('tr');
+                
+                // Create row header (row number)
+                const th = document.createElement('th');
+                th.textContent = i + 1;
+                th.className = 'row-header';
+                tr.appendChild(th);
+                
+                // Create cells for this row
+                for (let j = 0; j < currentData[i].length; j++) {
+                    const td = document.createElement('td');
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'cell-input';
+                    input.dataset.row = i;
+                    input.dataset.col = j;
+                    input.value = currentData[i][j];
+                    
+                    input.addEventListener('focus', handleCellFocus);
+                    input.addEventListener('input', handleCellInput);
+                    input.addEventListener('keydown', handleCellKeydown);
+                    
+                    td.appendChild(input);
+                    tr.appendChild(td);
+                }
+                
+                spreadsheetBody.appendChild(tr);
+            }
+            
+            // Update column headers if needed
+            updateColumnHeaders();
+            
+            // Reset active cell
+            activeCellCoords = { row: null, col: null };
+            activeCellElement = null;
+            activeCellLabel.textContent = '-';
+            formulaInput.value = '';
+        }
+
+        // Update column headers based on current data columns
+        function updateColumnHeaders() {
+            // Clear existing headers except the first one (empty corner)
+            while (headerRow.children.length > 1) {
+                headerRow.removeChild(headerRow.lastChild);
+            }
+            
+            // Add column headers
+            for (let j = 0; j < currentData[0].length; j++) {
+                const th = document.createElement('th');
+                
+                // Generate column label (A, B, C, ... Z, AA, AB, etc.)
+                let colLabel = '';
+                let columnIndex = j;
+                
+                do {
+                    colLabel = columnLetters[columnIndex % 26] + colLabel;
+                    columnIndex = Math.floor(columnIndex / 26) - 1;
+                } while (columnIndex >= 0);
+                
+                th.textContent = colLabel;
+                th.className = 'column-header';
+                headerRow.appendChild(th);
+            }
+        }
+
+        // Handle cell focus
+        function handleCellFocus(e) {
+            const row = parseInt(e.target.dataset.row);
+            const col = parseInt(e.target.dataset.col);
+            
+            // Remove highlight from previous active cell
+            if (activeCellElement) {
+                activeCellElement.classList.remove('active-cell');
+            }
+            
+            // Set new active cell
+            activeCellCoords = { row, col };
+            activeCellElement = e.target;
+            activeCellElement.classList.add('active-cell');
+            
+            // Update formula bar
+            formulaInput.value = currentData[row][col];
+            
+            // Update active cell label
+            let colLabel = '';
+            let columnIndex = col;
+            
+            do {
+                colLabel = columnLetters[columnIndex % 26] + colLabel;
+                columnIndex = Math.floor(columnIndex / 26) - 1;
+            } while (columnIndex >= 0);
+            
+            activeCellLabel.textContent = `${colLabel}${row + 1}`;
+        }
+
+        // Handle cell input
+        function handleCellInput(e) {
+            const row = parseInt(e.target.dataset.row);
+            const col = parseInt(e.target.dataset.col);
+            
+            // Update data array
+            currentData[row][col] = e.target.value;
+            
+            // Update formula bar if it's the active cell
+            if (activeCellCoords.row === row && activeCellCoords.col === col) {
+                formulaInput.value = e.target.value;
+            }
+        }
+        
+        // Handle keydown in cells for navigation
+        function handleCellKeydown(e) {
+            const row = parseInt(e.target.dataset.row);
+            const col = parseInt(e.target.dataset.col);
+            
+            // Handle arrow keys
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || 
+                e.key === 'ArrowLeft' || e.key === 'ArrowRight' || 
+                e.key === 'Tab' || e.key === 'Enter') {
+                
+                let newRow = row;
+                let newCol = col;
+                
+                if (e.key === 'ArrowUp') {
+                    newRow = Math.max(0, row - 1);
+                } else if (e.key === 'ArrowDown' || e.key === 'Enter') {
+                    newRow = Math.min(currentData.length - 1, row + 1);
+                } else if (e.key === 'ArrowLeft') {
+                    newCol = Math.max(0, col - 1);
+                } else if (e.key === 'ArrowRight' || e.key === 'Tab') {
+                    newCol = Math.min(currentData[0].length - 1, col + 1);
+                    if (e.key === 'Tab') {
+                        e.preventDefault(); // Prevent tab from changing focus
+                    }
+                }
+                
+                if (newRow !== row || newCol !== col) {
+                    // Find the cell at the new coordinates
+                    const newCell = document.querySelector(`.cell-input[data-row="${newRow}"][data-col="${newCol}"]`);
+                    if (newCell) {
+                        newCell.focus();
+                    }
+                }
+            }
+        }
+
+        // Import CSV
+        function importCSV(file) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const content = e.target.result;
+                parseCSV(content);
+            };
+            
+            reader.readAsText(file);
+        }
+
+        // Parse CSV content
+        function parseCSV(content) {
+            // Split by lines and filter out empty lines
+            const lines = content.split(/\r\n|\n/).filter(line => line.trim());
+            
+            if (lines.length === 0) {
+                showStatus('Error: Empty CSV file.');
+                return;
+            }
+            
+            // Parse data
+            const data = [];
+            let maxCols = 0;
+            
+            for (const line of lines) {
+                // Handle quoted values with commas inside them
+                let inQuote = false;
+                let currentValue = '';
+                const row = [];
+                
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+                    
+                    if (char === '"') {
+                        inQuote = !inQuote;
+                    } else if (char === ',' && !inQuote) {
+                        row.push(currentValue);
+                        currentValue = '';
+                    } else {
+                        currentValue += char;
+                    }
+                }
+                
+                // Add the last value
+                row.push(currentValue);
+                
+                // Update max columns
+                maxCols = Math.max(maxCols, row.length);
+                
+                data.push(row);
+            }
+            
+            // Ensure all rows have the same number of columns
+            for (const row of data) {
+                while (row.length < maxCols) {
+                    row.push('');
+                }
+            }
+            
+            // Update current data
+            currentData = data;
+            
+            // Render spreadsheet
+            renderSpreadsheet();
+            showStatus('CSV file imported successfully.');
+        }
+        
+        // Import XLSX
+        function importXLSX(file) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // Get first sheet
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    
+                    // Convert to array of arrays
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    
+                    // Find the maximum number of columns
+                    let maxCols = 0;
+                    for (const row of jsonData) {
+                        maxCols = Math.max(maxCols, row.length);
+                    }
+                    
+                    // Ensure all rows have the same number of columns
+                    const processedData = jsonData.map(row => {
+                        const newRow = [...row];
+                        while (newRow.length < maxCols) {
+                            newRow.push('');
+                        }
+                        return newRow.map(cell => cell !== null && cell !== undefined ? String(cell) : '');
+                    });
+                    
+                    // Update current data
+                    currentData = processedData;
+                    
+                    // Handle empty spreadsheet
+                    if (currentData.length === 0) {
+                        currentData = [Array(DEFAULT_COLS).fill('')];
+                    }
+                    
+                    // Render spreadsheet
+                    renderSpreadsheet();
+                    showStatus('XLSX file imported successfully.');
+                } catch (error) {
+                    console.error('Error importing XLSX:', error);
+                    showStatus('Error importing XLSX file. Please check format.');
+                }
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Export to CSV
+        function exportCSV() {
+            // Prepare CSV content
+            let csvContent = '';
+            
+            for (const row of currentData) {
+                const rowValues = row.map(cell => {
+                    // Handle cells with commas, quotes, or newlines
+                    if (cell.includes(',') || cell.includes('"') || cell.includes('\n')) {
+                        return `"${cell.replace(/"/g, '""')}"`;
+                    }
+                    return cell;
+                });
+                
+                csvContent += rowValues.join(',') + '\n';
+            }
+            
+            // Get filename from user
+            let filename = prompt("Enter filename for your CSV export:", "spreadsheet");
+            if (!filename) return; // User cancelled
+            
+            if (!filename.toLowerCase().endsWith('.csv')) {
+                filename += '.csv';
+            }
+            
+            // Create a blob and download link
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            downloadFile(blob, filename);
+            
+            showStatus('CSV file exported successfully.');
+        }
+        
+        // Export to XLSX
+        function exportXLSX() {
+            try {
+                // Convert data to worksheet
+                const ws = XLSX.utils.aoa_to_sheet(currentData);
+                
+                // Create workbook and add the worksheet
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+                
+                // Get filename from user
+                let filename = prompt("Enter filename for your XLSX export:", "spreadsheet");
+                if (!filename) return; // User cancelled
+                
+                if (!filename.toLowerCase().endsWith('.xlsx')) {
+                    filename += '.xlsx';
+                }
+                
+                // Generate XLSX file and trigger download
+                XLSX.writeFile(wb, filename);
+                
+                showStatus('XLSX file exported successfully.');
+            } catch (error) {
+                console.error('Error exporting XLSX:', error);
+                showStatus('Error exporting XLSX file.');
+            }
+        }
+        
+        // Helper function for downloading files
+        function downloadFile(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            
+            // Clean up
+            setTimeout(function() {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }, 0);
+        }
+
+        // Add a new row
+        function addRow() {
+            const newRow = Array(currentData[0].length).fill('');
+            currentData.push(newRow);
+            renderSpreadsheet();
+            showStatus('Row added.');
+        }
+
+        // Add a new column
+        function addColumn() {
+            for (const row of currentData) {
+                row.push('');
+            }
+            renderSpreadsheet();
+            showStatus('Column added.');
+        }
+
+        // Delete the last row
+        function deleteRow() {
+            if (currentData.length > 1) {
+                currentData.pop();
+                renderSpreadsheet();
+                showStatus('Last row deleted.');
+            } else {
+                showStatus('Cannot delete the last row.');
+            }
+        }
+
+        // Delete the last column
+        function deleteColumn() {
+            if (currentData[0].length > 1) {
+                for (const row of currentData) {
+                    row.pop();
+                }
+                renderSpreadsheet();
+                showStatus('Last column deleted.');
+            } else {
+                showStatus('Cannot delete the last column.');
+            }
+        }
+
+        // Show status message
+        function showStatus(message) {
+            statusBar.textContent = message;
+            
+            // Clear status after 3 seconds
+            setTimeout(function() {
+                statusBar.textContent = '';
+            }, 3000);
+        }
+
+        // Event listeners
+        newBtn.addEventListener('click', initializeSpreadsheet);
+        
+        importBtn.addEventListener('click', function() {
+            importFile.click();
+        });
+        
+        importFile.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                importCSV(e.target.files[0]);
+                e.target.value = ''; // Reset file input
+            }
+        });
+        
+        importBtnXlsx.addEventListener('click', function() {
+            importXlsx.click();
+        });
+        
+        importXlsx.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                importXLSX(e.target.files[0]);
+                e.target.value = ''; // Reset file input
+            }
+        });
+        
+        exportCsvBtn.addEventListener('click', exportCSV);
+        exportXlsxBtn.addEventListener('click', exportXLSX);
+        addRowBtn.addEventListener('click', addRow);
+        addColBtn.addEventListener('click', addColumn);
+        delRowBtn.addEventListener('click', deleteRow);
+        delColBtn.addEventListener('click', deleteColumn);
+        
+        // Formula bar input handling
+        formulaInput.addEventListener('input', function(e) {
+            if (activeCellCoords.row !== null && activeCellCoords.col !== null) {
+                const value = e.target.value;
+                
+                // Update data array
+                currentData[activeCellCoords.row][activeCellCoords.col] = value;
+                
+                // Update cell input
+                if (activeCellElement) {
+                    activeCellElement.value = value;
+                }
+            }
+        });
+        
+        // Initialize on page load
+        window.addEventListener('load', initializeSpreadsheet);
+    </script>
+</body>
+</html>

@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>pCalc</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #f0f2f5;
+        }
+        
+        .calculator {
+            width: 320px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+        }
+        
+        .display-container {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+        }
+        
+        .mode-switcher {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .mode-btn {
+            background: none;
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .mode-btn.active {
+            background: rgba(255, 255, 255, 0.2);
+            font-weight: bold;
+        }
+        
+        .base-selector {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .base-btn {
+            background: none;
+            border: none;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .base-btn.active {
+            background: rgba(255, 255, 255, 0.2);
+            font-weight: bold;
+        }
+        
+        .display {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 15px;
+            text-align: right;
+            font-size: 2rem;
+            font-weight: 300;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            min-height: 70px;
+            word-break: break-all;
+            backdrop-filter: blur(5px);
+        }
+        
+        .secondary-display {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1rem;
+            text-align: right;
+            min-height: 20px;
+            margin-bottom: 5px;
+        }
+        
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            padding: 20px;
+        }
+        
+        button {
+            border: none;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(5px);
+            color: white;
+            font-size: 1.2rem;
+            padding: 15px 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        button:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+        
+        button:active {
+            transform: scale(0.95);
+        }
+        
+        .operator {
+            background: rgba(255, 255, 255, 0.25);
+            font-weight: bold;
+        }
+        
+        .equals {
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+            font-weight: bold;
+        }
+        
+        .clear {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            font-weight: bold;
+        }
+        
+        .conversion {
+            font-size: 0.9rem;
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .special {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div class="display-container">
+            <div class="mode-switcher">
+                <button class="mode-btn active" data-mode="standard">Standard</button>
+                <button class="mode-btn" data-mode="programmer">Programmer</button>
+            </div>
+            <div class="base-selector" style="display: none;">
+                <button class="base-btn active" data-base="10">DEC</button>
+                <button class="base-btn" data-base="16">HEX</button>
+                <button class="base-btn" data-base="8">OCT</button>
+                <button class="base-btn" data-base="2">BIN</button>
+            </div>
+            <div class="secondary-display" id="secondary-display"></div>
+            <div class="display" id="display">0</div>
+        </div>
+        <div class="buttons" id="standard-buttons">
+            <!-- Standard Calculator Buttons -->
+            <button class="clear" data-action="clear">AC</button>
+            <button class="special" data-action="clear-entry">CE</button>
+            <button class="operator" data-action="percent">%</button>
+            <button class="operator" data-action="divide">÷</button>
+            
+            <button data-digit="7">7</button>
+            <button data-digit="8">8</button>
+            <button data-digit="9">9</button>
+            <button class="operator" data-action="multiply">×</button>
+            
+            <button data-digit="4">4</button>
+            <button data-digit="5">5</button>
+            <button data-digit="6">6</button>
+            <button class="operator" data-action="subtract">−</button>
+            
+            <button data-digit="1">1</button>
+            <button data-digit="2">2</button>
+            <button data-digit="3">3</button>
+            <button class="operator" data-action="add">+</button>
+            
+            <button data-digit="0">0</button>
+            <button data-action="decimal">.</button>
+            <button class="operator" data-action="power">^</button>
+            <button class="equals" data-action="equals">=</button>
+        </div>
+        <div class="buttons" id="programmer-buttons" style="display: none;">
+            <!-- Programmer Calculator Buttons -->
+            <button class="clear" data-action="clear">AC</button>
+            <button class="special" data-action="clear-entry">CE</button>
+            <button class="conversion" data-action="hex-to-bin">HEX→BIN</button>
+            <button class="conversion" data-action="bin-to-hex">BIN→HEX</button>
+            
+            <button data-digit="7">7</button>
+            <button data-digit="8">8</button>
+            <button data-digit="9">9</button>
+            <button class="conversion" data-action="dec-to-bin">DEC→BIN</button>
+            
+            <button data-digit="4">4</button>
+            <button data-digit="5">5</button>
+            <button data-digit="6">6</button>
+            <button class="conversion" data-action="bin-to-dec">BIN→DEC</button>
+            
+            <button data-digit="1">1</button>
+            <button data-digit="2">2</button>
+            <button data-digit="3">3</button>
+            <button class="equals" data-action="equals">=</button>
+            
+            <button data-digit="0">0</button>
+            <button data-digit="A" class="hex-button">A</button>
+            <button data-digit="B" class="hex-button">B</button>
+            <button data-digit="C" class="hex-button">C</button>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const display = document.getElementById('display');
+            const secondaryDisplay = document.getElementById('secondary-display');
+            const standardButtons = document.getElementById('standard-buttons');
+            const programmerButtons = document.getElementById('programmer-buttons');
+            const baseSelector = document.querySelector('.base-selector');
+            const modeButtons = document.querySelectorAll('.mode-btn');
+            const baseButtons = document.querySelectorAll('.base-btn');
+            const hexButtons = document.querySelectorAll('.hex-button');
+            
+            let currentMode = 'standard';
+            let currentBase = 10;
+            let currentInput = '0';
+            let previousInput = '';
+            let operation = null;
+            let waitingForOperand = false;
+            
+            // Mode switcher
+            modeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const mode = this.getAttribute('data-mode');
+                    switchMode(mode);
+                    
+                    modeButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+            
+            // Base selector
+            baseButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const base = parseInt(this.getAttribute('data-base'));
+                    switchBase(base);
+                    
+                    baseButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+            
+            function switchMode(mode) {
+                currentMode = mode;
+                if (mode === 'standard') {
+                    standardButtons.style.display = 'grid';
+                    programmerButtons.style.display = 'none';
+                    baseSelector.style.display = 'none';
+                    clearAll();
+                } else {
+                    standardButtons.style.display = 'none';
+                    programmerButtons.style.display = 'grid';
+                    baseSelector.style.display = 'flex';
+                    switchBase(10); // Default to decimal
+                    clearAll();
+                }
+            }
+            
+            function switchBase(base) {
+                currentBase = base;
+                if (currentInput !== '0') {
+                    try {
+                        // Convert current input to the new base
+                        const decimalValue = parseInt(currentInput, currentBase);
+                        currentInput = decimalValue.toString(base).toUpperCase();
+                        updateDisplay();
+                    } catch (e) {
+                        currentInput = '0';
+                        updateDisplay();
+                    }
+                }
+                
+                // Enable/disable hex buttons
+                hexButtons.forEach(button => {
+                    button.disabled = base < 16;
+                });
+            }
+            
+            function updateDisplay() {
+                display.textContent = currentInput;
+            }
+            
+            function updateSecondaryDisplay() {
+                if (operation) {
+                    secondaryDisplay.textContent = `${previousInput} ${getOperationSymbol(operation)}`;
+                } else {
+                    secondaryDisplay.textContent = '';
+                }
+            }
+            
+            function getOperationSymbol(op) {
+                switch (op) {
+                    case 'add': return '+';
+                    case 'subtract': return '−';
+                    case 'multiply': return '×';
+                    case 'divide': return '÷';
+                    case 'power': return '^';
+                    case 'percent': return '%';
+                    default: return '';
+                }
+            }
+            
+            function clearAll() {
+                currentInput = '0';
+                previousInput = '';
+                operation = null;
+                waitingForOperand = false;
+                updateDisplay();
+                updateSecondaryDisplay();
+            }
+            
+            function clearEntry() {
+                currentInput = '0';
+                updateDisplay();
+            }
+            
+            function inputDigit(digit) {
+                if (waitingForOperand) {
+                    currentInput = digit.toString();
+                    waitingForOperand = false;
+                } else {
+                    currentInput = currentInput === '0' ? digit.toString() : currentInput + digit.toString();
+                }
+                updateDisplay();
+            }
+            
+            function inputDecimal() {
+                if (waitingForOperand) {
+                    currentInput = '0.';
+                    waitingForOperand = false;
+                } else if (currentInput.indexOf('.') === -1) {
+                    currentInput += '.';
+                }
+                updateDisplay();
+            }
+            
+            function handleOperation(nextOperation) {
+                const inputValue = currentMode === 'programmer' 
+                    ? parseInt(currentInput, currentBase)
+                    : parseFloat(currentInput);
+                
+                if (previousInput === '') {
+                    previousInput = currentInput;
+                } else if (operation) {
+                    const result = performCalculation();
+                    previousInput = currentMode === 'programmer' 
+                        ? result.toString(currentBase).toUpperCase()
+                        : result.toString();
+                    currentInput = previousInput;
+                }
+                
+                waitingForOperand = true;
+                operation = nextOperation;
+                
+                updateSecondaryDisplay();
+                updateDisplay();
+            }
+            
+            function performCalculation() {
+                const prevValue = currentMode === 'programmer' 
+                    ? parseInt(previousInput, currentBase)
+                    : parseFloat(previousInput);
+                const currentValue = currentMode === 'programmer' 
+                    ? parseInt(currentInput, currentBase)
+                    : parseFloat(currentInput);
+                
+                let result;
+                
+                switch (operation) {
+                    case 'add':
+                        result = prevValue + currentValue;
+                        break;
+                    case 'subtract':
+                        result = prevValue - currentValue;
+                        break;
+                    case 'multiply':
+                        result = prevValue * currentValue;
+                        break;
+                    case 'divide':
+                        result = prevValue / currentValue;
+                        break;
+                    case 'power':
+                        result = Math.pow(prevValue, currentValue);
+                        break;
+                    case 'percent':
+                        result = (prevValue / 100) * currentValue;
+                        break;
+                    default:
+                        return currentValue;
+                }
+                
+                return result;
+            }
+            
+            function handleEquals() {
+                if (!operation) return;
+                
+                const result = performCalculation();
+                
+                currentInput = currentMode === 'programmer' 
+                    ? result.toString(currentBase).toUpperCase()
+                    : result.toString();
+                
+                previousInput = '';
+                operation = null;
+                waitingForOperand = true;
+                
+                updateDisplay();
+                updateSecondaryDisplay();
+            }
+            
+            function handlePercent() {
+                if (currentMode === 'standard') {
+                    handleOperation('percent');
+                }
+            }
+            
+            // Conversion functions
+            function hexToBin() {
+                try {
+                    const hex = currentInput.toUpperCase();
+                    const decimal = parseInt(hex, 16);
+                    currentInput = decimal.toString(2);
+                    updateDisplay();
+                } catch (e) {
+                    currentInput = 'Error';
+                    updateDisplay();
+                    setTimeout(() => {
+                        currentInput = '0';
+                        updateDisplay();
+                    }, 1000);
+                }
+            }
+            
+            function binToHex() {
+                try {
+                    const binary = currentInput;
+                    const decimal = parseInt(binary, 2);
+                    currentInput = decimal.toString(16).toUpperCase();
+                    updateDisplay();
+                } catch (e) {
+                    currentInput = 'Error';
+                    updateDisplay();
+                    setTimeout(() => {
+                        currentInput = '0';
+                        updateDisplay();
+                    }, 1000);
+                }
+            }
+            
+            function decToBin() {
+                try {
+                    const decimal = parseInt(currentInput, 10);
+                    currentInput = decimal.toString(2);
+                    updateDisplay();
+                } catch (e) {
+                    currentInput = 'Error';
+                    updateDisplay();
+                    setTimeout(() => {
+                        currentInput = '0';
+                        updateDisplay();
+                    }, 1000);
+                }
+            }
+            
+            function binToDec() {
+                try {
+                    const binary = currentInput;
+                    const decimal = parseInt(binary, 2);
+                    currentInput = decimal.toString(10);
+                    updateDisplay();
+                } catch (e) {
+                    currentInput = 'Error';
+                    updateDisplay();
+                    setTimeout(() => {
+                        currentInput = '0';
+                        updateDisplay();
+                    }, 1000);
+                }
+            }
+            
+            // Event handlers
+            document.querySelectorAll('button').forEach(button => {
+                button.addEventListener('click', function() {
+                    if (this.hasAttribute('data-digit')) {
+                        inputDigit(this.getAttribute('data-digit'));
+                    } else if (this.hasAttribute('data-action')) {
+                        const action = this.getAttribute('data-action');
+                        
+                        switch (action) {
+                            case 'clear':
+                                clearAll();
+                                break;
+                            case 'clear-entry':
+                                clearEntry();
+                                break;
+                            case 'decimal':
+                                inputDecimal();
+                                break;
+                            case 'equals':
+                                handleEquals();
+                                break;
+                            case 'add':
+                            case 'subtract':
+                            case 'multiply':
+                            case 'divide':
+                            case 'power':
+                                handleOperation(action);
+                                break;
+                            case 'percent':
+                                handlePercent();
+                                break;
+                            case 'hex-to-bin':
+                                hexToBin();
+                                break;
+                            case 'bin-to-hex':
+                                binToHex();
+                                break;
+                            case 'dec-to-bin':
+                                decToBin();
+                                break;
+                            case 'bin-to-dec':
+                                binToDec();
+                                break;
+                        }
+                    }
+                });
+            });
+            
+            // Keyboard support
+            document.addEventListener('keydown', function(event) {
+                const key = event.key;
+                
+                if (/^[0-9]$/.test(key)) {
+                    inputDigit(key);
+                } else if (currentMode === 'programmer' && /^[a-fA-F]$/.test(key) && currentBase === 16) {
+                    inputDigit(key.toUpperCase());
+                } else {
+                    switch (key) {
+                        case '.':
+                            if (currentMode === 'standard') inputDecimal();
+                            break;
+                        case '+':
+                            if (currentMode === 'standard') handleOperation('add');
+                            break;
+                        case '-':
+                            if (currentMode === 'standard') handleOperation('subtract');
+                            break;
+                        case '*':
+                            if (currentMode === 'standard') handleOperation('multiply');
+                            break;
+                        case '/':
+                            if (currentMode === 'standard') handleOperation('divide');
+                            break;
+                        case '^':
+                            if (currentMode === 'standard') handleOperation('power');
+                            break;
+                        case '%':
+                            if (currentMode === 'standard') handleOperation('percent');
+                            break;
+                        case 'Enter':
+                        case '=':
+                            handleEquals();
+                            break;
+                        case 'Escape':
+                            clearAll();
+                            break;
+                        case 'Delete':
+                        case 'Backspace':
+                            if (currentInput.length > 1) {
+                                currentInput = currentInput.slice(0, -1);
+                            } else {
+                                currentInput = '0';
+                            }
+                            updateDisplay();
+                            break;
+                    }
+                }
+            });
+            
+            // Initialize
+            updateDisplay();
+        });
+    </script>
+</body>
+</html>
