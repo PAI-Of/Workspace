@@ -7,36 +7,38 @@
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
     .hidden { display: none; }
+    .task-item:hover .delete-btn { opacity: 1; }
+    .delete-btn { opacity: 0.3; transition: opacity 0.2s; }
   </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center h-screen">
-  <div id="app" class="max-w-md mx-auto p-4 rounded-lg shadow-lg bg-gray-100">
+<body class="bg-gray-100 flex items-center justify-center min-h-screen py-8">
+  <div id="app" class="max-w-md mx-auto p-4 rounded-lg shadow-lg bg-white w-full">
     <h1 class="text-2xl font-bold text-center mb-4">PRDV Timer</h1>
 
     <!-- Timer Mode Selection -->
     <div class="flex justify-center mb-4 gap-2">
-      <button id="pomodoro-btn" class="px-4 py-2 rounded-md bg-gray-200">Pomodoro</button>
-      <button id="2minute-btn" class="px-4 py-2 rounded-md bg-gray-200">2-Minute</button>
+      <button id="pomodoro-btn" class="px-4 py-2 rounded-md bg-blue-500 text-white">Pomodoro</button>
+      <button id="twomin-btn" class="px-4 py-2 rounded-md bg-gray-200">2-Minute</button>
     </div>
 
     <!-- Timer Display -->
     <div class="text-center mb-4">
       <div id="timer-display" class="text-4xl font-bold mb-2">25:00</div>
       <div id="phase-display" class="text-xl mb-2">Work Time</div>
-      <div id="pomodoro-count" class="text-sm mb-2 hidden">Pomodoros: 0/4</div>
+      <div id="pomodoro-count" class="text-sm mb-2">Pomodoros: 0/4</div>
     </div>
 
     <!-- Timer Controls -->
     <div class="flex justify-center gap-2 mb-6">
-      <button id="toggle-timer-btn" class="p-2 bg-blue-500 text-white rounded-full">▶️</button>
-      <button id="skip-phase-btn" class="p-2 bg-gray-500 text-white rounded-full">⏩</button>
-      <button id="reset-timer-btn" class="p-2 bg-red-500 text-white rounded-full">⏰</button>
+      <button id="toggle-timer-btn" class="p-2 bg-blue-500 text-white rounded-full w-10 h-10 flex items-center justify-center">▶️</button>
+      <button id="skip-phase-btn" class="p-2 bg-gray-500 text-white rounded-full w-10 h-10 flex items-center justify-center">⏩</button>
+      <button id="reset-timer-btn" class="p-2 bg-red-500 text-white rounded-full w-10 h-10 flex items-center justify-center">⏰</button>
     </div>
 
     <!-- Todo Section -->
     <div class="mt-6">
       <h2 class="text-xl font-bold mb-2">Task Breakdown</h2>
-      <p class="text-sm mb-4">Break down your tasks into 2-minute segments</p>
+      <p class="text-sm mb-4">Break down your tasks into manageable segments</p>
 
       <!-- Add new todo -->
       <div class="flex mb-4">
@@ -50,9 +52,9 @@
   </div>
 
   <script>
-    const app = document.getElementById('app');
+    // DOM elements
     const pomodoroBtn = document.getElementById('pomodoro-btn');
-    const twoMinuteBtn = document.getElementById('2minute-btn');
+    const twoMinBtn = document.getElementById('twomin-btn');
     const timerDisplay = document.getElementById('timer-display');
     const phaseDisplay = document.getElementById('phase-display');
     const pomodoroCountDisplay = document.getElementById('pomodoro-count');
@@ -62,143 +64,192 @@
     const newTodoInput = document.getElementById('new-todo-input');
     const addTodoBtn = document.getElementById('add-todo-btn');
     const todoList = document.getElementById('todo-list');
+    
+    // App state
+    const state = {
+      mode: 'pomodoro',
+      isRunning: false,
+      timeLeft: 25 * 60,
+      phase: 'work',
+      pomodoroCount: 0,
+      intervalId: null,
+      todos: [
+        { 
+          id: 1, 
+          text: 'Example Task', 
+          completed: false, 
+          expanded: true, 
+          subtasks: [
+            { id: 11, text: 'Subtask 1', completed: false },
+            { id: 12, text: 'Subtask 2', completed: false }
+          ] 
+        }
+      ],
+      activeSubtaskParentId: null
+    };
 
-    let mode = 'pomodoro';
-    let isRunning = false;
-    let timeLeft = 25 * 60;
-    let phase = 'work';
-    let pomodoroCount = 0;
-    let intervalId = null;
-    let todos = [{ id: 1, text: 'Example Task', completed: false, expanded: true, subtasks: [{ id: 11, text: 'Subtask 1', completed: false }, { id: 12, text: 'Subtask 2', completed: false }] }];
-    let newTodoText = '';
-    let newSubtaskText = '';
-    let activeParentId = null;
-
+    // Timer durations
     const durations = {
       pomodoro: { work: 25 * 60, break: 5 * 60, longBreak: 15 * 60 },
       '2minute': { work: 2 * 60, break: 1 * 60 }
     };
 
-    const formatTime = (seconds) => {
+    // Format seconds to MM:SS
+    function formatTime(seconds) {
       const mins = Math.floor(seconds / 60);
       const secs = seconds % 60;
-      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    };
+      return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
 
-    const updateTimerDisplay = () => {
-      timerDisplay.textContent = formatTime(timeLeft);
-      phaseDisplay.textContent = phase === 'work' ? 'Work Time' : phase === 'longBreak' ? 'Long Break' : 'Break Time';
-      pomodoroCountDisplay.textContent = `Pomodoros: ${pomodoroCount}/4`;
-      pomodoroCountDisplay.classList.toggle('hidden', mode !== 'pomodoro');
-    };
+    // Update the timer display
+    function updateTimerDisplay() {
+      timerDisplay.textContent = formatTime(state.timeLeft);
+      phaseDisplay.textContent = state.phase === 'work' ? 'Work Time' : 
+                                 state.phase === 'longBreak' ? 'Long Break' : 'Break Time';
+      pomodoroCountDisplay.textContent = `Pomodoros: ${state.pomodoroCount}/4`;
+      pomodoroCountDisplay.classList.toggle('hidden', state.mode !== 'pomodoro');
+    }
 
-    const toggleTimer = () => {
-      if (isRunning) {
-        clearInterval(intervalId);
+    // Toggle timer
+    function toggleTimer() {
+      if (state.isRunning) {
+        clearInterval(state.intervalId);
       } else {
-        intervalId = setInterval(() => {
-          timeLeft--;
+        state.intervalId = setInterval(() => {
+          state.timeLeft--;
           updateTimerDisplay();
-          if (timeLeft <= 0) {
+          if (state.timeLeft <= 0) {
             handlePhaseComplete();
           }
         }, 1000);
       }
-      isRunning = !isRunning;
-      toggleTimerBtn.textContent = isRunning ? '⏸️' : '▶️';
-    };
+      state.isRunning = !state.isRunning;
+      toggleTimerBtn.textContent = state.isRunning ? '⏸️' : '▶️';
+    }
 
-    const handlePhaseComplete = () => {
-      clearInterval(intervalId);
-      if (phase === 'work') {
-        if (mode === 'pomodoro') {
-          pomodoroCount++;
-          if (pomodoroCount % 4 === 0) {
-            phase = 'longBreak';
-            timeLeft = durations.pomodoro.longBreak;
+    // Handle phase completion
+    function handlePhaseComplete() {
+      clearInterval(state.intervalId);
+      if (state.phase === 'work') {
+        if (state.mode === 'pomodoro') {
+          state.pomodoroCount++;
+          if (state.pomodoroCount % 4 === 0) {
+            state.phase = 'longBreak';
+            state.timeLeft = durations.pomodoro.longBreak;
           } else {
-            phase = 'break';
-            timeLeft = durations.pomodoro.break;
+            state.phase = 'break';
+            state.timeLeft = durations.pomodoro.break;
           }
         } else {
-          phase = 'break';
-          timeLeft = durations['2minute'].break;
+          state.phase = 'break';
+          state.timeLeft = durations['2minute'].break;
         }
       } else {
-        phase = 'work';
-        timeLeft = durations[mode].work;
+        state.phase = 'work';
+        state.timeLeft = durations[state.mode].work;
       }
       updateTimerDisplay();
       playNotificationSound();
-    };
+    }
 
-    const skipPhase = () => {
-      clearInterval(intervalId);
-      isRunning = false;
+    // Skip current phase
+    function skipPhase() {
+      clearInterval(state.intervalId);
+      state.isRunning = false;
       handlePhaseComplete();
-    };
+      toggleTimerBtn.textContent = '▶️';
+    }
 
-    const resetTimer = () => {
-      clearInterval(intervalId);
-      isRunning = false;
-      phase = 'work';
-      timeLeft = durations[mode].work;
-      if (mode === 'pomodoro') {
-        pomodoroCount = 0;
+    // Reset timer
+    function resetTimer() {
+      clearInterval(state.intervalId);
+      state.isRunning = false;
+      state.phase = 'work';
+      state.timeLeft = durations[state.mode].work;
+      if (state.mode === 'pomodoro') {
+        state.pomodoroCount = 0;
       }
       updateTimerDisplay();
       toggleTimerBtn.textContent = '▶️';
-    };
+    }
 
-    const playNotificationSound = () => {
+    // Play notification sound
+    function playNotificationSound() {
       const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj2n7/+pTw8HM5r0/7hfGgItl+z/yHIjBCeO5P/XiC8FIITb/+ObNwUaeNP/87I+BhVuzP8FxkYHD2TK/xjUTAgKW8X/LuFTCQdSv/9C7VoJBEq6/1f5YAoDQbX/bQVnCgE4sP+DD20KADGr/5gZdAwVJKD/uih9DhUXl//UOIUQFQmR/+1HjBIUA4v/CE2SEwT9hv8jUpkUBPeC/z5XnxUD8X7/WVylFgLreuV0cagXAuZ2LY9yqxcC4XMQpHOtFwLccPi4da4XAthueM12rxcC1GvF6HC0GHXPaOnDb7YYdctmFexxuBh2yGNh+221GHbFYK0HarUYd8Nd4hNlthh4wFr1IF+3GHi9WFE3WLgZerpaKUdSuRl7t1fPXEy6GXy0VbtyRrwaffFT9ocIwitRLJwBBTxPX7MNEilIkMoVHiNEwOQcJiM/8PsdLCQ8FwkWLiU4SBscJSkyeiUlITCrMiogLdRFOR8p/VU/HiYoaWNFHSUacXJJHCQWfH5OHCIThoRSGxYQj4pVGxQNl5dZGhEKn55cGRFToKVfGBBNqL5iGA9Ir9VlFxFEtvtoFhQ/vgRrFBY8xBttEhk5yTBvERw2z05xDx81Zo5zcRAekbeVdBEkhMGcdhA6f8ujeBBBe9SoeRHydr6ueRHyc8m1ehHxctC7exLvcte/fBPtcNzDfRTsbuLIfhXrabDe03DQVF6n3N1uzg9Sn9jmcM0KTprT7XLLBUuW0fR0ywBIks74dsv7RY7N/XjM+UOKzQJ7zfZBh8wIfc71P4TLD3/P8z2CyxZ/0fFXf6zLeH3V7yp9aqdte9jtFXtpbW152Owm/Qdobnjh6lv/BGRsd+LpVgAGYmx35ug0AghibHfp5x4ECWJrd+vmRAYKYmt37uU3CAthangk5FEKDGBpeJXiYwwNYGl34OF6Dg5faXfp4JgQEF5peYDgvBISXWl52uDiExRcanqo3w8VFlxpe6Xe2RYXXGp7WK3wMT/9//80QQgIADheQQEAHrNHBQAb/UsFABr9UCYNGPtVUy0X+Vx4SRb3YqV5FPVwx6kT83jpxhLxjQTqEfCwIPAP774+9w7tw1zzDe2XcvgM7Lp0+wvp2HbxCujzee8I5g99rgbkIIXV++I5jcTh4T+wzBTg1JH00I/e95vU+5PoCYfY+JTpMXba95HrXG3d9o7thmrf9YvvnmHi9In0vWLn84T26GTs8oD47Wrx8H36Cm7v73v8JnHu7X3/P3Tt63//YnbdKX8BhXeRNAGaeJwgAa55pQkBxXu9eAeOfc9gBah/9jQEzIEZAwb0gywCAR6EnKgACKXd+//Hp3D3/+qtWpj//7S2RoP//7u/M3D//8HIO13//8fTDkr//87cAzj//9TlAC3//9vt/yMQAOLzBwDfDRDn+M//2h0l7f7N/9UsOPED///RPVL2///YTm3v///fX4vp///md6vk///tiNDf///0mfXZ////vDTX////1lzT////72vQ//8=');
       audio.play();
-    };
+    }
 
-    const addTodo = () => {
-      if (newTodoText.trim()) {
-        const newTodo = {
+    // Change timer mode
+    function changeMode(newMode) {
+      state.mode = newMode;
+      state.phase = 'work';
+      state.pomodoroCount = 0;
+      state.isRunning = false;
+      state.timeLeft = durations[newMode].work;
+      updateTimerDisplay();
+      
+      // Update UI
+      pomodoroBtn.classList.toggle('bg-blue-500', newMode === 'pomodoro');
+      pomodoroBtn.classList.toggle('text-white', newMode === 'pomodoro');
+      pomodoroBtn.classList.toggle('bg-gray-200', newMode !== 'pomodoro');
+      
+      twoMinBtn.classList.toggle('bg-blue-500', newMode === '2minute');
+      twoMinBtn.classList.toggle('text-white', newMode === '2minute');
+      twoMinBtn.classList.toggle('bg-gray-200', newMode !== '2minute');
+    }
+
+    // Add a new main task
+    function addTodo() {
+      const todoText = newTodoInput.value.trim();
+      if (todoText) {
+        state.todos.push({
           id: Date.now(),
-          text: newTodoText,
+          text: todoText,
           completed: false,
           expanded: true,
           subtasks: []
-        };
-        todos.push(newTodo);
-        renderTodos();
-        newTodoText = '';
+        });
         newTodoInput.value = '';
+        renderTodos();
       }
-    };
+    }
 
-    const addSubtask = (parentId) => {
-      if (newSubtaskText.trim()) {
-        todos = todos.map(todo => {
+    // Add a subtask to a parent task
+    function addSubtask(parentId) {
+      const subtaskInput = document.getElementById(`subtask-input-${parentId}`);
+      const subtaskText = subtaskInput.value.trim();
+      
+      if (subtaskText) {
+        // Find the parent task and add the subtask
+        state.todos = state.todos.map(todo => {
           if (todo.id === parentId) {
             return {
               ...todo,
               subtasks: [...todo.subtasks, {
                 id: Date.now(),
-                text: newSubtaskText,
+                text: subtaskText,
                 completed: false
               }]
             };
           }
           return todo;
         });
-        newSubtaskText = '';
-        activeParentId = null;
+        
+        // Clear the input and reset state
+        subtaskInput.value = '';
         renderTodos();
       }
-    };
+    }
 
-    const toggleTodo = (id, isSubtask, parentId) => {
+    // Toggle task completion
+    function toggleTodo(id, isSubtask, parentId) {
       if (isSubtask) {
-        todos = todos.map(todo => {
+        // Toggle subtask completion
+        state.todos = state.todos.map(todo => {
           if (todo.id === parentId) {
             return {
               ...todo,
-              subtasks: todo.subtasks.map(subtask =>
+              subtasks: todo.subtasks.map(subtask => 
                 subtask.id === id ? { ...subtask, completed: !subtask.completed } : subtask
               )
             };
@@ -206,23 +257,27 @@
           return todo;
         });
       } else {
-        todos = todos.map(todo =>
+        // Toggle main task completion
+        state.todos = state.todos.map(todo => 
           todo.id === id ? { ...todo, completed: !todo.completed } : todo
         );
       }
       renderTodos();
-    };
+    }
 
-    const toggleExpansion = (id) => {
-      todos = todos.map(todo =>
+    // Toggle task expansion (show/hide subtasks)
+    function toggleExpansion(id) {
+      state.todos = state.todos.map(todo => 
         todo.id === id ? { ...todo, expanded: !todo.expanded } : todo
       );
       renderTodos();
-    };
+    }
 
-    const deleteTodo = (id, isSubtask, parentId) => {
+    // Delete a task or subtask
+    function deleteTodo(id, isSubtask, parentId) {
       if (isSubtask) {
-        todos = todos.map(todo => {
+        // Delete subtask from parent
+        state.todos = state.todos.map(todo => {
           if (todo.id === parentId) {
             return {
               ...todo,
@@ -232,65 +287,162 @@
           return todo;
         });
       } else {
-        todos = todos.filter(todo => todo.id !== id);
+        // Delete main task
+        state.todos = state.todos.filter(todo => todo.id !== id);
       }
       renderTodos();
-    };
+    }
 
-    const renderTodos = () => {
-      todoList.innerHTML = todos.map(todo => `
-        <div class="border border-gray-200 rounded-md p-2">
-          <div class="flex items-center">
-            <button class="mr-2 text-gray-500 hover:text-gray-700" onclick="toggleExpansion(${todo.id})">
-              ${todo.expanded ? '▼' : '▶'}
-            </button>
-            <button class="mr-2" onclick="toggleTodo(${todo.id}, false)">
-              ${todo.completed ? '✅' : '⭕'}
-            </button>
-            <span class="${todo.completed ? 'line-through text-gray-500' : ''}">${todo.text}</span>
-            <button class="text-red-500 hover:text-red-700 ml-auto" onclick="deleteTodo(${todo.id}, false)">
-              &times;
-            </button>
-          </div>
-          ${todo.expanded ? `
-            <div class="pl-8 mt-2 space-y-2">
-              ${todo.subtasks.map(subtask => `
-                <div class="flex items-center">
-                  <button class="mr-2" onclick="toggleTodo(${subtask.id}, true, ${todo.id})">
-                    ${subtask.completed ? '✅' : '⭕'}
-                  </button>
-                  <span class="${subtask.completed ? 'line-through text-gray-500' : ''}">${subtask.text}</span>
-                  <button class="text-red-500 hover:text-red-700 ml-auto" onclick="deleteTodo(${subtask.id}, true, ${todo.id})">
-                    &times;
-                  </button>
-                </div>
-              `).join('')}
-              ${activeParentId === todo.id ? `
-                <div class="flex">
-                  <input type="text" value="${newSubtaskText}" oninput="newSubtaskText = this.value" class="flex-1 border border-gray-300 rounded-l-md px-2 py-1 text-sm" placeholder="Add a subtask..." onkeypress="if (event.key === 'Enter') addSubtask(${todo.id})" autofocus>
-                  <button class="bg-blue-500 text-white px-2 py-1 rounded-r-md text-sm" onclick="addSubtask(${todo.id})">
-                    Add
-                  </button>
-                </div>
-              ` : `
-                <button class="text-blue-500 hover:text-blue-700 text-sm" onclick="activeParentId = ${todo.id}">
-                  + Add subtask
-                </button>
-              `}
-            </div>
-          ` : ''}
-        </div>
-      `).join('');
-    };
+    // Toggle subtask input visibility
+    function toggleSubtaskInput(parentId) {
+      const subtaskInputContainer = document.getElementById(`subtask-input-container-${parentId}`);
+      const addSubtaskBtn = document.getElementById(`add-subtask-btn-${parentId}`);
+      
+      if (subtaskInputContainer.classList.contains('hidden')) {
+        subtaskInputContainer.classList.remove('hidden');
+        addSubtaskBtn.classList.add('hidden');
+        document.getElementById(`subtask-input-${parentId}`).focus();
+      } else {
+        subtaskInputContainer.classList.add('hidden');
+        addSubtaskBtn.classList.remove('hidden');
+      }
+    }
 
-    pomodoroBtn.addEventListener('click', () => {
-      changeMode('pomodoro');
-    });
+    // Cancel adding a subtask
+    function cancelSubtaskInput(parentId) {
+      const subtaskInputContainer = document.getElementById(`subtask-input-container-${parentId}`);
+      const addSubtaskBtn = document.getElementById(`add-subtask-btn-${parentId}`);
+      
+      subtaskInputContainer.classList.add('hidden');
+      addSubtaskBtn.classList.remove('hidden');
+      document.getElementById(`subtask-input-${parentId}`).value = '';
+    }
 
-    twoMinuteBtn.addEventListener('click', () => {
-      changeMode('2minute');
-    });
+    // Render the task list
+    function renderTodos() {
+      todoList.innerHTML = '';
+      
+      state.todos.forEach(todo => {
+        // Create main task element
+        const todoEl = document.createElement('div');
+        todoEl.className = 'border border-gray-200 rounded-md p-3 bg-white';
+        
+        // Task header
+        const taskHeader = document.createElement('div');
+        taskHeader.className = 'flex items-center task-item';
+        
+        // Expand/collapse button
+        const expandBtn = document.createElement('button');
+        expandBtn.className = 'mr-2 text-gray-500 hover:text-gray-700 w-6 text-center';
+        expandBtn.textContent = todo.expanded ? '▼' : '▶';
+        expandBtn.onclick = () => toggleExpansion(todo.id);
+        
+        // Checkbox button
+        const checkBtn = document.createElement('button');
+        checkBtn.className = 'mr-2 w-6 text-center';
+        checkBtn.textContent = todo.completed ? '✅' : '⭕';
+        checkBtn.onclick = () => toggleTodo(todo.id, false);
+        
+        // Task text
+        const taskText = document.createElement('span');
+        taskText.className = todo.completed ? 'line-through text-gray-500' : '';
+        taskText.textContent = todo.text;
+        
+        // Delete button
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'text-red-500 hover:text-red-700 ml-auto delete-btn';
+        deleteBtn.textContent = '×';
+        deleteBtn.onclick = () => deleteTodo(todo.id, false);
+        
+        // Assemble task header
+        taskHeader.appendChild(expandBtn);
+        taskHeader.appendChild(checkBtn);
+        taskHeader.appendChild(taskText);
+        taskHeader.appendChild(deleteBtn);
+        todoEl.appendChild(taskHeader);
+        
+        // Subtasks container (shown when expanded)
+        if (todo.expanded) {
+          const subtasksContainer = document.createElement('div');
+          subtasksContainer.className = 'pl-8 mt-2 space-y-2';
+          
+          // Render existing subtasks
+          todo.subtasks.forEach(subtask => {
+            const subtaskEl = document.createElement('div');
+            subtaskEl.className = 'flex items-center task-item';
+            
+            // Subtask checkbox
+            const subtaskCheck = document.createElement('button');
+            subtaskCheck.className = 'mr-2 w-6 text-center';
+            subtaskCheck.textContent = subtask.completed ? '✅' : '⭕';
+            subtaskCheck.onclick = () => toggleTodo(subtask.id, true, todo.id);
+            
+            // Subtask text
+            const subtaskText = document.createElement('span');
+            subtaskText.className = subtask.completed ? 'line-through text-gray-500' : '';
+            subtaskText.textContent = subtask.text;
+            
+            // Subtask delete button
+            const subtaskDelete = document.createElement('button');
+            subtaskDelete.className = 'text-red-500 hover:text-red-700 ml-auto delete-btn';
+            subtaskDelete.textContent = '×';
+            subtaskDelete.onclick = () => deleteTodo(subtask.id, true, todo.id);
+            
+            subtaskEl.appendChild(subtaskCheck);
+            subtaskEl.appendChild(subtaskText);
+            subtaskEl.appendChild(subtaskDelete);
+            subtasksContainer.appendChild(subtaskEl);
+          });
+          
+          // Subtask input container (hidden by default)
+          const subtaskInputContainer = document.createElement('div');
+          subtaskInputContainer.id = `subtask-input-container-${todo.id}`;
+          subtaskInputContainer.className = 'flex mt-2 hidden';
+          
+          // Subtask input field
+          const subtaskInput = document.createElement('input');
+          subtaskInput.id = `subtask-input-${todo.id}`;
+          subtaskInput.className = 'flex-1 border border-gray-300 rounded-l-md px-2 py-1 text-sm';
+          subtaskInput.placeholder = 'Add a subtask...';
+          subtaskInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addSubtask(todo.id);
+          });
+          
+          // Add subtask button
+          const addSubtaskInputBtn = document.createElement('button');
+          addSubtaskInputBtn.className = 'bg-blue-500 text-white px-2 py-1 rounded-r-md text-sm';
+          addSubtaskInputBtn.textContent = 'Add';
+          addSubtaskInputBtn.onclick = () => addSubtask(todo.id);
+          
+          // Cancel button
+          const cancelBtn = document.createElement('button');
+          cancelBtn.className = 'bg-gray-300 text-gray-700 px-2 py-1 rounded-md text-sm ml-1';
+          cancelBtn.textContent = 'Cancel';
+          cancelBtn.onclick = () => cancelSubtaskInput(todo.id);
+          
+          subtaskInputContainer.appendChild(subtaskInput);
+          subtaskInputContainer.appendChild(addSubtaskInputBtn);
+          subtaskInputContainer.appendChild(cancelBtn);
+          subtasksContainer.appendChild(subtaskInputContainer);
+          
+          // "Add subtask" button (shown when input is hidden)
+          const addSubtaskBtn = document.createElement('button');
+          addSubtaskBtn.id = `add-subtask-btn-${todo.id}`;
+          addSubtaskBtn.className = 'text-blue-500 hover:text-blue-700 text-sm mt-2 inline-block';
+          addSubtaskBtn.textContent = '+ Add subtask';
+          addSubtaskBtn.onclick = () => toggleSubtaskInput(todo.id);
+          subtasksContainer.appendChild(addSubtaskBtn);
+          
+          todoEl.appendChild(subtasksContainer);
+        }
+        
+        todoList.appendChild(todoEl);
+      });
+    }
 
+    // Event listeners
+    pomodoroBtn.addEventListener('click', () => changeMode('pomodoro'));
+    twoMinBtn.addEventListener('click', () => changeMode('2minute'));
     toggleTimerBtn.addEventListener('click', toggleTimer);
     skipPhaseBtn.addEventListener('click', skipPhase);
     resetTimerBtn.addEventListener('click', resetTimer);
@@ -299,21 +451,7 @@
       if (e.key === 'Enter') addTodo();
     });
 
-    const changeMode = (newMode) => {
-      mode = newMode;
-      phase = 'work';
-      pomodoroCount = 0;
-      isRunning = false;
-      timeLeft = durations[newMode].work;
-      updateTimerDisplay();
-      pomodoroBtn.classList.toggle('bg-blue-500', newMode === 'pomodoro');
-      pomodoroBtn.classList.toggle('text-white', newMode === 'pomodoro');
-      twoMinuteBtn.classList.toggle('bg-blue-500', newMode === '2minute');
-      twoMinuteBtn.classList.toggle('text-white', newMode === '2minute');
-      pomodoroBtn.classList.toggle('bg-gray-200', newMode !== 'pomodoro');
-      twoMinuteBtn.classList.toggle('bg-gray-200', newMode !== '2minute');
-    };
-
+    // Initialize the app
     updateTimerDisplay();
     renderTodos();
   </script>
