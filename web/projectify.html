@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Projectify</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- SheetJS for Excel handling -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- jsPDF for PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    :root {
+      --primary-color: #3498db;
+      --secondary-color: #2c3e50;
+      --accent-color: #e74c3c;
+      --success-color: #2ecc71;
+      --light-gray: #f5f5f5;
+      --medium-gray: #e0e0e0;
+      --dark-gray: #333;
+      --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --border-radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: var(--dark-gray);
+    }
+
+    .app-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      background-color: var(--secondary-color);
+      color: white;
+      padding: 20px;
+      border-radius: var(--border-radius);
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+
+    header h1 {
+      margin-bottom: 10px;
+      font-size: 2rem;
+    }
+
+    header p {
+      opacity: 0.8;
+      font-size: 1rem;
+    }
+
+    .card {
+      background-color: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .card-header {
+      font-size: 1.3rem;
+      font-weight: bold;
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--medium-gray);
+      margin-bottom: 15px;
+      color: var(--secondary-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-header .step {
+      background-color: var(--primary-color);
+      color: white;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: var(--secondary-color);
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--medium-gray);
+      border-radius: 4px;
+      font-size: 1rem;
+      margin-bottom: 5px;
+    }
+
+    input[type="file"] {
+      border: 1px dashed var(--medium-gray);
+      padding: 10px;
+      border-radius: 4px;
+      width: 100%;
+      background-color: var(--light-gray);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: bold;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: #2980b9;
+    }
+
+    .btn-success {
+      background-color: var(--success-color);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background-color: #27ae60;
+    }
+
+    .btn-accent {
+      background-color: var(--accent-color);
+      color: white;
+    }
+
+    .btn-accent:hover {
+      background-color: #c0392b;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .import-area {
+      border: 2px dashed var(--medium-gray);
+      padding: :20px;
+      text-align: center;
+      background-color: var(--light-gray);
+      border-radius: var(--border-radius);
+      margin-bottom: 15px;
+      padding: 20px;
+    }
+
+    .import-area p {
+      margin-bottom: 15px;
+      color: var(--dark-gray);
+    }
+
+    .student-list {
+      margin-top: 20px;
+    }
+
+    .student-item {
+      padding: 15px;
+      border: 1px solid var(--medium-gray);
+      border-radius: var(--border-radius);
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: white;
+    }
+
+    .student-info {
+      flex: 1;
+    }
+
+    .student-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .preview-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .page {
+      background: white;
+      width: 210mm;
+      height: 297mm;
+      box-shadow: var(--shadow);
+      box-sizing: border-box;
+      padding: 20mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      margin: 20px 0;
+      border-radius: 2px;
+      position: relative;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 20px;
+      border-bottom: 2px solid var(--medium-gray);
+      padding-bottom: 10px;
+    }
+
+    .top-half {
+      display: flex;
+      height: 45%;
+      margin-bottom: 5%;
+      gap: 20px;
+    }
+
+    .top-half .section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-size: 18px;
+      padding: 20px;
+      border: 1px solid var(--medium-gray);
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .section-label {
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: var(--secondary-color);
+      font-size: 1.1rem;
+    }
+
+    .section-value {
+      font-size: 1.4rem;
+    }
+
+    .bottom-half {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: 1px solid var(--medium-gray);
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 10px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .bottom-half img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .page-footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.8rem;
+      color: #888;
+    }
+
+    .no-image {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      background-color: var(--light-gray);
+      font-style: italic;
+      color: #888;
+    }
+
+    .delete-btn {
+      color: var(--accent-color);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    #notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px 20px;
+      background-color: var(--success-color);
+      color: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      transform: translateY(-100px);
+      opacity: 0;
+      transition: all 0.5s ease;
+      z-index: 1000;
+    }
+
+    #notification.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      .page, .page * {
+        visibility: visible;
+      }
+      .page {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        box-shadow: none;
+        margin: 0;
+        padding: 15mm;
+      }
+    }
+
+    /* Mobile tweaks */
+    @media (max-width: 768px) {
+      .page {
+        width: 100%;
+        height: auto;
+        padding: 10mm;
+      }
+
+      .top-half {
+        flex-direction: column;
+        height: auto;
+        gap: 10px;
+      }
+
+      .btn-group {
+        flex-direction: column;
+      }
+
+      .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <h1>PI-Projectify</h1>
+      <p>By Pawan Yadav for <b>Renu Ma'am</b></p>
+    </header>
+
+    <div class="card">
+      <div class="card-header">
+        <span>Add Student Project</span>
+        <span class="step">1</span>
+      </div>
+      <form id="studentForm">
+        <div class="form-group">
+          <label for="studentName">Student Name</label>
+          <input type="text" id="studentName" placeholder="Enter student name" required>
+        </div>
+        <div class="form-group">
+          <label for="projectMarking">Project Marking</label>
+          <input type="text" id="projectMarking" placeholder="Enter project marks (e.g., 4.5 / 5)" required>
+        </div>
+        <div class="form-group">
+          <label for="projectImage">Project Image</label>
+          <input type="file" id="projectImage" accept="image/*">
+          <small>Max file size: 5MB</small>
+        </div>
+        <button type="submit" class="btn btn-primary">Add Student</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span>Import Students</span>
+        <span class="step">2</span>
+      </div>
+      <div class="import-area">
+        <p>Import student data from Excel file</p>
+        <input type="file" id="excelFile" accept=".xlsx, .xls, .csv">
+        <small>Excel format: Column A - Student Name, Column B - Project Marking</small>
+      </div>
+      <button id="importBtn" class="btn btn-primary">Import Data</button>
+    </div>
+
+    <div class="card" id="studentListCard">
+      <div class="card-header">
+        <span>Student List</span>
+        <span class="step">3</span>
+      </div>
+      <div id="studentList" class="student-list">
+        <p>No students added yet.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span>Preview & Export</span>
+        <span class="step">4</span>
+      </div>
+      <div class="btn-group">
+        <button id="previewBtn" class="btn btn-primary">Preview Project Sheets</button>
+        <button id="exportPdfBtn" class="btn btn-success">Export to PDF</button>
+        <button id="resetBtn" class="btn btn-accent">Reset All Data</button>
+      </div>
+    </div>
+
+    <div id="previewContainer" class="preview-container hidden"></div>
+  </div>
+
+  <div id="notification">Success!</div>
+
+  <script>
+    // Using jsPDF from the global scope
+    const { jsPDF } = window.jspdf;
+    
+    // Student data array
+    let students = [];
+    
+    // DOM elements
+    const form = document.getElementById('studentForm');
+    const studentList = document.getElementById('studentList');
+    const previewContainer = document.getElementById('previewContainer');
+    const previewBtn = document.getElementById('previewBtn');
+    const exportPdfBtn = document.getElementById('exportPdfBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const importBtn = document.getElementById('importBtn');
+    const excelFile = document.getElementById('excelFile');
+    const notification = document.getElementById('notification');
+
+    // Show notification
+    function showNotification(message) {
+      notification.textContent = message;
+      notification.classList.add('show');
+      setTimeout(() => {
+        notification.classList.remove('show');
+      }, 3000);
+    }
+
+    // Load students from localStorage if available
+    function loadStudents() {
+      const savedStudents = localStorage.getItem('studentProjects');
+      if (savedStudents) {
+        students = JSON.parse(savedStudents);
+        renderStudentList();
+      }
+    }
+
+    // Save students to localStorage
+    function saveStudents() {
+      localStorage.setItem('studentProjects', JSON.stringify(students));
+    }
+
+    // Convert image file to base64
+    function getBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+      });
+    }
+
+    // Add student to the list
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const nameInput = document.getElementById('studentName');
+      const markingInput = document.getElementById('projectMarking');
+      const imageInput = document.getElementById('projectImage');
+      
+      const name = nameInput.value.trim();
+      const marking = markingInput.value.trim();
+      let imageData = '';
+      
+      if (imageInput.files.length > 0) {
+        try {
+          imageData = await getBase64(imageInput.files[0]);
+        } catch (error) {
+          console.error('Error converting image:', error);
+          showNotification('Error processing image');
+          return;
+        }
+      }
+      
+      // Add to students array
+      students.push({
+        name,
+        marking,
+        image: imageData
+      });
+      
+      // Save to localStorage
+      saveStudents();
+      
+      // Render the updated list
+      renderStudentList();
+      
+      // Reset form
+      form.reset();
+      
+      showNotification('Student added successfully!');
+    });
+
+    // Render student list
+    function renderStudentList() {
+      if (students.length === 0) {
+        studentList.innerHTML = '<p>No students added yet.</p>';
+        return;
+      }
+      
+      studentList.innerHTML = '';
+      students.forEach((student, index) => {
+        const item = document.createElement('div');
+        item.className = 'student-item';
+        
+        item.innerHTML = `
+          <div class="student-info">
+            <strong>${student.name}</strong> - Marking: ${student.marking}
+          </div>
+          <div class="student-actions">
+            <button class="delete-btn" data-index="${index}">Delete</button>
+          </div>
+        `;
+        
+        studentList.appendChild(item);
+      });
+    }
+
+    // Delete student
+    studentList.addEventListener('click', function(e) {
+      if (e.target.classList.contains('delete-btn')) {
+        const index = parseInt(e.target.getAttribute('data-index'));
+        students.splice(index, 1);
+        saveStudents();
+        renderStudentList();
+        showNotification('Student removed');
+      }
+    });
+
+    // Generate preview
+    previewBtn.addEventListener('click', function() {
+      if (students.length === 0) {
+        showNotification('No students to preview');
+        return;
+      }
+      
+      previewContainer.innerHTML = '';
+      previewContainer.classList.remove('hidden');
+      
+      students.forEach(student => {
+        const page = document.createElement('div');
+        page.className = 'page';
+        
+        page.innerHTML = `
+          <div class="page-header">
+            <h2>Student Project Report</h2>
+          </div>
+          
+          <div class="top-half">
+            <div class="section">
+              <div class="section-label">Student Name</div>
+              <div class="section-value">${student.name}</div>
+            </div>
+            <div class="section">
+              <div class="section-label">Project Marking</div>
+              <div class="section-value">${student.marking}</div>
+            </div>
+          </div>
+          
+          <div class="bottom-half">
+            ${student.image ? `<img src="${student.image}" alt="Project Image">` : '<div class="no-image">No image provided</div>'}
+          </div>
+          
+          <div class="page-footer">
+            Generated on ${new Date().toLocaleDateString()}
+          </div>
+        `;
+        
+        previewContainer.appendChild(page);
+      });
+      
+      // Scroll to preview
+      previewContainer.scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // Export to PDF
+    exportPdfBtn.addEventListener('click', async function() {
+      if (students.length === 0) {
+        showNotification('No students to export');
+        return;
+      }
+
+      // Show preview if not visible
+      if (previewContainer.classList.contains('hidden')) {
+        previewBtn.click();
+      }
+
+      showNotification('Preparing PDF export...');
+
+      // Wait a moment for images to fully load
+      setTimeout(async () => {
+        try {
+          const pages = document.querySelectorAll('.page');
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          
+          for (let i = 0; i < pages.length; i++) {
+            // For first page, no need to add a new page
+            if (i > 0) {
+              pdf.addPage();
+            }
+            
+            const page = pages[i];
+            const canvas = await html2canvas(page, {
+              scale: 2,
+              useCORS: true,
+              logging: false
+            });
+            
+            const imgData = canvas.toDataURL('image/jpeg', 1.0);
+            pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+          }
+          
+          // Save the PDF
+          pdf.save(`student_projects_${new Date().toISOString().slice(0,10)}.pdf`);
+          showNotification('PDF exported successfully!');
+        } catch (error) {
+          console.error('Error generating PDF:', error);
+          showNotification('Error generating PDF');
+        }
+      }, 500);
+    });
+
+    // Import Excel/CSV data
+    importBtn.addEventListener('click', function() {
+      const file = excelFile.files[0];
+      if (!file) {
+        showNotification('Please select a file first');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          
+          // Get first sheet
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          
+          // Convert to JSON
+          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+          
+          // Process data (skip header row if exists)
+          const startRow = jsonData[0][0] === 'Student Name' || jsonData[0][0] === 'Name' ? 1 : 0;
+          
+          let importCount = 0;
+          for (let i = startRow; i < jsonData.length; i++) {
+            const row = jsonData[i];
+            if (row.length >= 2 && row[0] && row[1]) {
+              students.push({
+                name: row[0],
+                marking: row[1],
+                image: '' // No image from import
+              });
+              importCount++;
+            }
+          }
+          
+          // Save and render
+          saveStudents();
+          renderStudentList();
+          
+          showNotification(`${importCount} students imported successfully!`);
+          excelFile.value = '';
+        } catch (error) {
+          console.error('Error importing data:', error);
+          showNotification('Error importing data. Check file format.');
+        }
+      };
+      
+      reader.readAsArrayBuffer(file);
+    });
+
+    // Export students to Excel template
+    function exportToExcel() {
+      // Create a new workbook
+      const wb = XLSX.utils.book_new();
+      
+      // Format data for Excel
+      const wsData = [
+        ['Student Name', 'Project Marking'], // Header row
+        ...students.map(student => [student.name, student.marking])
+      ];
+      
+      // Create worksheet
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(wb, ws, 'Students');
+      
+      // Generate Excel file
+      XLSX.writeFile(wb, `student_data_${new Date().toISOString().slice(0,10)}.xlsx`);
+    }
+
+    // Reset all data
+    resetBtn.addEventListener('click', function() {
+      if (confirm('Are you sure you want to reset all data? This cannot be undone.')) {
+        students = [];
+        localStorage.removeItem('studentProjects');
+        renderStudentList();
+        previewContainer.innerHTML = '';
+        previewContainer.classList.add('hidden');
+        showNotification('All data has been reset');
+      }
+    });
+
+    // Load saved students on page load
+    window.addEventListener('DOMContentLoaded', loadStudents);
+  </script>
+</body>
+</html>

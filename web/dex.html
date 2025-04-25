@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dex</title>
+    <link rel="shortcut icon" href="img/d!.png" type="image/png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background-color: #1a1a1a;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        #controls {
+            background: #333;
+            padding: 12px;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+        button {
+            padding: 8px 12px;
+            background: #4a6ea9;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #5d82c1;
+        }
+        button:active {
+            transform: translateY(1px);
+        }
+        button.active {
+            background: #5d82c1;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
+        }
+        #main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        #tool-bar {
+            width: 90px;
+            background: #2a2a2a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px 5px;
+            gap: 15px;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+        }
+        .tool-button {
+            padding: 10px;
+            width: 70px;
+            height: 45px;
+            font-size: 18px;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            gap: 5px;
+        }
+        .control-label {
+            font-size: 12px;
+            margin-bottom: 3px;
+        }
+        input[type="color"] {
+            width: 60px;
+            height: 30px;
+            border: none;
+            cursor: pointer;
+        }
+        input[type="range"] {
+            width: 80px;
+        }
+        #brush-size-value {
+            font-size: 12px;
+        }
+        #canvas-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #383838;
+            position: relative;
+            overflow: hidden;
+        }
+        #canvas {
+            background-color: white;
+            border: 1px solid #666;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            max-width: 100%;
+            max-height: calc(100% - 160px);
+        }
+        #preview-container {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: #2a2a2a;
+            padding: 8px;
+            border-radius: 4px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+        }
+        #preview {
+            width: 200px;
+            height: 150px;
+            background: white;
+            border: 1px solid gray;
+        }
+        #timeline {
+            height: 100px;
+            display: flex;
+            align-items: center;
+            background: #2a2a2a;
+            padding: 10px;
+            gap: 10px;
+            overflow-x: auto;
+        }
+        .frame-thumb {
+            width: 80px;
+            height: 60px;
+            border: 2px solid #555;
+            cursor: pointer;
+            flex-shrink: 0;
+            background-color: white;
+            transition: border-color 0.2s;
+        }
+        .frame-thumb.active {
+            border-color: #4a6ea9;
+        }
+        .timeline-frame {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        .frame-number {
+            font-size: 12px;
+        }
+        #status {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        #fps-control {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        #fps {
+            width: 50px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <button id="btn-create-frame">New Frame</button>
+        <button id="btn-duplicate-frame">Duplicate Frame</button>
+        <button id="btn-delete-frame">Delete Frame</button>
+        <button id="btn-play">Play</button>
+        <div id="fps-control">
+            <label for="fps">FPS:</label>
+            <input type="number" id="fps" min="1" max="60" value="10">
+        </div>
+        <button id="btn-export">Export PNG</button>
+    </div>
+    <div id="main-container">
+        <div id="tool-bar">
+            <button id="btn-pencil" class="tool-button active">✏️</button>
+            <button id="btn-eraser" class="tool-button">🧹</button>
+            <button id="btn-clear" class="tool-button">🗑️</button>
+            
+            <div class="control-group">
+                <span class="control-label">Color</span>
+                <input type="color" id="color-picker" value="#000000">
+            </div>
+            
+            <div class="control-group">
+                <span class="control-label">Brush Size</span>
+                <input type="range" id="brush-size" min="1" max="50" value="5">
+                <span id="brush-size-value">5px</span>
+            </div>
+        </div>
+        <div id="canvas-container">
+            <canvas id="canvas" width="800" height="600"></canvas>
+            <div id="status">Frame: 1/1</div>
+            <div id="preview-container">
+                <canvas id="preview" width="200" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+    <div id="timeline"></div>
+
+    <script>
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        const preview = document.getElementById("preview");
+        const previewCtx = preview.getContext("2d");
+        const timeline = document.getElementById("timeline");
+        const btnCreateFrame = document.getElementById("btn-create-frame");
+        const btnDuplicateFrame = document.getElementById("btn-duplicate-frame");
+        const btnDeleteFrame = document.getElementById("btn-delete-frame");
+        const btnPlay = document.getElementById("btn-play");
+        const btnExport = document.getElementById("btn-export");
+        const btnPencil = document.getElementById("btn-pencil");
+        const btnEraser = document.getElementById("btn-eraser");
+        const btnClear = document.getElementById("btn-clear");
+        const colorPicker = document.getElementById("color-picker");
+        const brushSize = document.getElementById("brush-size");
+        const brushSizeValue = document.getElementById("brush-size-value");
+        const fpsInput = document.getElementById("fps");
+        const statusDisplay = document.getElementById("status");
+
+        // Animation state
+        let frames = [];
+        let currentFrameIndex = 0;
+        let isPlaying = false;
+        let animationInterval;
+
+        // Drawing state
+        let drawing = false;
+        let tool = "pencil";
+        let lastX = null, lastY = null;
+        let currentColor = "#000000";
+        let currentBrushSize = 5;
+
+        // Initialize
+        initializeCanvas();
+        frames.push(createEmptyFrame());
+        updateTimeline();
+        updateStatusDisplay();
+
+        // Event listeners
+        canvas.addEventListener("mousedown", startDrawing);
+        canvas.addEventListener("mousemove", draw);
+        canvas.addEventListener("mouseup", stopDrawing);
+        canvas.addEventListener("mouseout", stopDrawing);
+
+        btnPencil.addEventListener("click", () => setTool("pencil"));
+        btnEraser.addEventListener("click", () => setTool("eraser"));
+        btnClear.addEventListener("click", clearCanvas);
+        btnCreateFrame.addEventListener("click", createNewFrame);
+        btnDuplicateFrame.addEventListener("click", duplicateCurrentFrame);
+        btnDeleteFrame.addEventListener("click", deleteCurrentFrame);
+        btnPlay.addEventListener("click", togglePlayback);
+        btnExport.addEventListener("click", exportFrameAsPNG);
+
+        colorPicker.addEventListener("input", updateColor);
+        brushSize.addEventListener("input", updateBrushSize);
+
+        // Functions
+        function initializeCanvas() {
+            // Set canvas initial state
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            previewCtx.fillStyle = "white";
+            previewCtx.fillRect(0, 0, preview.width, preview.height);
+        }
+
+        function createEmptyFrame() {
+            return ctx.getImageData(0, 0, canvas.width, canvas.height);
+        }
+
+        function loadFrame(index) {
+            if (frames[index]) {
+                ctx.putImageData(frames[index], 0, 0);
+                currentFrameIndex = index;
+                updatePreview();
+                updateStatusDisplay();
+                updateTimeline();
+            }
+        }
+
+        function updatePreview() {
+            previewCtx.clearRect(0, 0, preview.width, preview.height);
+            previewCtx.drawImage(
+                canvas, 
+                0, 0, canvas.width, canvas.height, 
+                0, 0, preview.width, preview.height
+            );
+        }
+
+        function updateTimeline() {
+            timeline.innerHTML = "";
+            frames.forEach((_, index) => {
+                const frameContainer = document.createElement("div");
+                frameContainer.classList.add("timeline-frame");
+                
+                const thumb = document.createElement("canvas");
+                thumb.width = 80;
+                thumb.height = 60;
+                thumb.classList.add("frame-thumb");
+                if (index === currentFrameIndex) {
+                    thumb.classList.add("active");
+                }
+                
+                const thumbCtx = thumb.getContext("2d");
+                thumbCtx.fillStyle = "white";
+                thumbCtx.fillRect(0, 0, thumb.width, thumb.height);
+                thumbCtx.drawImage(
+                    canvas, 
+                    0, 0, canvas.width, canvas.height, 
+                    0, 0, thumb.width, thumb.height
+                );
+                
+                thumb.addEventListener("click", () => loadFrame(index));
+                
+                const frameNumber = document.createElement("span");
+                frameNumber.classList.add("frame-number");
+                frameNumber.textContent = `Frame ${index + 1}`;
+                
+                frameContainer.appendChild(thumb);
+                frameContainer.appendChild(frameNumber);
+                timeline.appendChild(frameContainer);
+            });
+        }
+
+        function updateStatusDisplay() {
+            statusDisplay.textContent = `Frame: ${currentFrameIndex + 1}/${frames.length}`;
+        }
+
+        function startDrawing(event) {
+            drawing = true;
+            lastX = event.offsetX;
+            lastY = event.offsetY;
+            // Do an initial draw to handle single clicks
+            draw(event);
+        }
+
+        function draw(event) {
+            if (!drawing) return;
+            
+            const x = event.offsetX;
+            const y = event.offsetY;
+            
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+            ctx.lineWidth = currentBrushSize;
+            ctx.strokeStyle = tool === "pencil" ? currentColor : "white";
+            
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            
+            lastX = x;
+            lastY = y;
+            
+            updatePreview();
+        }
+
+        function stopDrawing() {
+            if (drawing) {
+                // Save the frame after drawing is complete
+                saveCurrentFrame();
+                drawing = false;
+                lastX = null;
+                lastY = null;
+            }
+        }
+
+        function saveCurrentFrame() {
+            frames[currentFrameIndex] = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            updateTimeline();
+        }
+
+        function clearCanvas() {
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            saveCurrentFrame();
+            updatePreview();
+        }
+
+        function createNewFrame() {
+            // Create a blank white frame
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            frames.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+            loadFrame(frames.length - 1);
+        }
+
+        function duplicateCurrentFrame() {
+            // Create a copy of the current frame
+            const frameCopy = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            frames.splice(currentFrameIndex + 1, 0, frameCopy);
+            loadFrame(currentFrameIndex + 1);
+        }
+
+        function deleteCurrentFrame() {
+            if (frames.length > 1) {
+                frames.splice(currentFrameIndex, 1);
+                loadFrame(Math.min(currentFrameIndex, frames.length - 1));
+            } else {
+                alert("Cannot delete the only frame!");
+            }
+        }
+
+        function togglePlayback() {
+            if (isPlaying) {
+                stopPlayback();
+            } else {
+                playAnimation();
+            }
+        }
+
+        function playAnimation() {
+            isPlaying = true;
+            btnPlay.textContent = "Stop";
+            let index = 0;
+            const fps = parseInt(fpsInput.value) || 10;
+            const frameDelay = 1000 / fps;
+            
+            function animate() {
+                if (index >= frames.length) {
+                    index = 0;
+                }
+                loadFrame(index);
+                index++;
+            }
+            
+            animate(); // Show first frame immediately
+            animationInterval = setInterval(animate, frameDelay);
+        }
+
+        function stopPlayback() {
+            isPlaying = false;
+            btnPlay.textContent = "Play";
+            clearInterval(animationInterval);
+        }
+
+        function exportFrameAsPNG() {
+            const link = document.createElement("a");
+            link.download = `frame_${currentFrameIndex + 1}.png`;
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+        }
+
+        function setTool(newTool) {
+            tool = newTool;
+            // Update active tool button
+            btnPencil.classList.toggle("active", tool === "pencil");
+            btnEraser.classList.toggle("active", tool === "eraser");
+        }
+
+        function updateColor(event) {
+            currentColor = event.target.value;
+        }
+
+        function updateBrushSize(event) {
+            currentBrushSize = parseInt(event.target.value);
+            brushSizeValue.textContent = `${currentBrushSize}px`;
+        }
+    </script>
+</body>
+</html>

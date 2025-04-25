@@ -7,7 +7,8 @@
     <title>pSheets</title>
     <style>
 body {
-    font-family: 'Segoe UI', Arial, sans-serif;
+    /* font-family: 'Segoe UI', Arial, sans-serif; */
+    font-family: 'JetBrains Mono', monospace;
     margin: 0;
     padding: 0;
     background: linear-gradient(135deg, #f5f9f5 0%, #e8f5e9 100%);
@@ -37,6 +38,7 @@ h1 {
     justify-content: space-between;
     margin-bottom: 15px;
     padding: 12px;
+    font-family: 'JetBrains Mono';
     background: linear-gradient(90deg, #e8f5e9 0%, #c8e6c9 100%);
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
@@ -49,7 +51,7 @@ h1 {
 }
 
 button {
-    background: linear-gradient(to bottom, #4caf50 0%, #49c24f 100%);
+    background: linear-gradient(135deg, #4caf50 0%, #49c24f 100%);
     color: white;
     border: none;
     padding: 8px 15px;
@@ -62,7 +64,7 @@ button {
 }
 
 button:hover {
-    background: linear-gradient(to bottom, #388e3c 0%, #2e7d32 100%);
+    background: linear-gradient(135deg, #3c913f 0%, #389f3d 100%);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     transform: translateY(-2px);
 }
@@ -76,7 +78,8 @@ button:disabled {
 input[type="text"] {
     padding: 8px 12px;
     border: 1px solid #bdbdbd;
-    border-radius: 6px;
+    border-radius: 0px;
+    resize: both;
     width: 150px;
     transition: border-color 0.3s ease-in-out;
 }
@@ -132,8 +135,9 @@ td {
     border: none;
     outline: none;
     margin: 0;
-    font-family: 'Segoe UI', Arial, sans-serif;
+    font-family: 'JetBrains Mono', monospace;
     font-size: 14px;
+    resize: both;
 }
 
 .cell-input:focus {
@@ -758,6 +762,23 @@ td {
             setTimeout(function() {
                 statusBar.textContent = '';
             }, 3000);
+        }
+        function execSheetScript(code){
+            tokens = code.split(' ');
+            var selected;
+            if (tokens.length > 2){
+                alert("ERROR! The Code you provide doesn't seem to be SheetScript");
+                console.error("MORE THEN MAX ARGUMENTS PASSED");
+            } else if (tokens[0] == 'printxt'){
+                alert(tokens[1]);
+            } else if (tokens[0] == 'select'){
+                selected = tokens[1];
+            } else if (tokens[0] == 'addrow'){
+                while(tokens[1]){
+                    addRow()
+                    tokens[1].value--;
+                }
+            }
         }
 
         // Event listeners

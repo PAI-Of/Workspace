@@ -1,0 +1,1857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="img/vdb.png">
+    <title>VoltDB-GUI</title>
+    <style>
+body {
+    font-family: 'JetBrains Mono', monospace;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(135deg, #f5f5fd 0%, #e8e4f5 100%);
+}
+
+.container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: white;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    border-top: 5px solid #6a1b9a;
+    transition: transform 0.3s ease-in-out;
+}
+
+h1 {
+    color: #6a1b9a;
+    text-align: center;
+    margin-top: 0;
+    font-size: 2.2em;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.toolbar {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    padding: 12px;
+    background: linear-gradient(90deg, #ede7f6 0%, #d1c4e9 100%);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: background-color 0.3s ease-in-out;
+}
+
+.toolbar-section {
+    display: flex;
+    gap: 12px;
+}
+
+button {
+    background: linear-gradient(135deg, #7b1fa2 0%, #9c27b0 100%);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    font-weight: 500;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    will-change: transform, background-color;
+}
+
+button:hover {
+    background: linear-gradient(135deg, #6a1b9a 0%, #8e24aa 100%);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px);
+}
+
+button:disabled {
+    background: linear-gradient(to bottom, #ce93d8 0%, #ba68c8 100%);
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+input[type="text"] {
+    padding: 8px 12px;
+    border: 1px solid #bdbdbd;
+    border-radius: 4px;
+    resize: both;
+    width: 150px;
+    transition: border-color 0.3s ease-in-out;
+}
+
+input[type="text"]:focus {
+    border-color: #9c27b0;
+    box-shadow: 0 0 0 2px rgba(156, 39, 176, 0.2);
+    outline: none;
+}
+
+input[type="file"] {
+    display: none;
+}
+
+.database-panel {
+    display: flex;
+    margin-bottom: 20px;
+    gap: 20px;
+}
+
+.object-explorer {
+    width: 250px;
+    background-color: #f5f5fd;
+    border: 1px solid #d1c4e9;
+    border-radius: 6px;
+    padding: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.object-explorer h3 {
+    color: #6a1b9a;
+    margin-top: 0;
+    border-bottom: 1px solid #d1c4e9;
+    padding-bottom: 8px;
+}
+
+.object-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.object-list-item {
+    padding: 6px 10px;
+    cursor: pointer;
+    border-radius: 4px;
+    margin-bottom: 2px;
+    transition: all 0.2s ease;
+}
+
+.object-list-item:hover {
+    background-color: #ede7f6;
+}
+
+.object-list-item.active {
+    background-color: #d1c4e9;
+    font-weight: bold;
+}
+
+.db-action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.spreadsheet-container {
+    overflow-x: auto;
+    flex-grow: 1;
+    border: 1px solid #d1c4e9;
+    border-radius: 6px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease-in-out;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    table-layout: fixed;
+}
+
+th {
+    background: linear-gradient(to bottom, #9c27b0 0%, #7b1fa2 100%);
+    color: white;
+    font-weight: bold;
+    text-align: center;
+    padding: 8px 4px;
+    position: sticky;
+    top: 0;
+    will-change: background-color;
+}
+
+td {
+    border: 1px solid #e0e0e0;
+    padding: 0;
+    height: 28px;
+    position: relative;
+}
+
+.cell-input {
+    width: 100%;
+    height: 100%;
+    padding: 4px 6px;
+    box-sizing: border-box;
+    border: none;
+    outline: none;
+    margin: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    resize: both;
+}
+
+.cell-input:focus {
+    background-color: #ede7f6;
+    box-shadow: inset 0 0 0 2px #9c27b0;
+}
+
+.active-cell {
+    background-color: #ede7f6;
+    box-shadow: inset 0 0 0 2px #9c27b0;
+}
+
+.column-header {
+    background: linear-gradient(to bottom, #ab47bc 0%, #9c27b0 100%);
+    color: white;
+    font-weight: bold;
+    text-align: center;
+    user-select: none;
+    width: 150px;
+    padding: 6px 0;
+}
+
+.row-header {
+    background: linear-gradient(to bottom, #ab47bc 0%, #9c27b0 100%);
+    color: white;
+    font-weight: bold;
+    text-align: center;
+    width: 40px;
+    user-select: none;
+    padding: 0;
+}
+
+.status-bar {
+    padding: 12px;
+    background: linear-gradient(90deg, #ede7f6 0%, #d1c4e9 100%);
+    border-radius: 6px;
+    color: #6a1b9a;
+    font-weight: bold;
+    text-align: center;
+    min-height: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.query-box {
+    display: flex;
+    margin-bottom: 15px;
+    gap: 10px;
+    padding: 12px;
+    background: linear-gradient(90deg, #f3e5f5 0%, #ede7f6 100%);
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.query-box label {
+    font-weight: bold;
+    color: #6a1b9a;
+}
+
+.query-box textarea {
+    flex-grow: 1;
+    padding: 8px 12px;
+    border: 1px solid #bdbdbd;
+    border-radius: 6px;
+    transition: border-color 0.3s ease-in-out;
+    height: 60px;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.query-box textarea:focus {
+    border-color: #9c27b0;
+    box-shadow: 0 0 0 2px rgba(156, 39, 176, 0.2);
+    outline: none;
+}
+
+.app-footer {
+    text-align: center;
+    margin-top: 20px;
+    color: #757575;
+    font-size: 0.85em;
+}
+
+.primary-key {
+    position: relative;
+    background-color: #f3e5f5;
+}
+
+.primary-key::before {
+    content: "🔑";
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-size: 10px;
+    color: #6a1b9a;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 500px;
+    max-width: 90%;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.modal h2 {
+    color: #6a1b9a;
+    margin-top: 0;
+}
+
+.modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.form-group label {
+    font-weight: bold;
+    color: #6a1b9a;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.tabs {
+    display: flex;
+    border-bottom: 1px solid #d1c4e9;
+    margin-bottom: 15px;
+}
+
+.tab {
+    padding: 8px 16px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    margin-right: 4px;
+    transition: all 0.2s ease;
+}
+
+.tab:hover {
+    background-color: #f3e5f5;
+}
+
+.tab.active {
+    background-color: #d1c4e9;
+    border-color: #9c27b0;
+    font-weight: bold;
+    color: #6a1b9a;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.relationship-line {
+    stroke: #9c27b0;
+    stroke-width: 2;
+    stroke-dasharray: 5;
+    marker-end: url(#arrowhead);
+}
+
+/* Responsive Design for Mobile */
+@media (max-width: 768px) {
+    .container {
+        margin: 10px;
+        padding: 15px;
+    }
+
+    .toolbar {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    button {
+        width: 100%;
+        padding: 10px;
+    }
+
+    input[type="text"], textarea {
+        width: 100%;
+    }
+
+    .database-panel {
+        flex-direction: column;
+    }
+
+    .object-explorer {
+        width: 100%;
+    }
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>VoltDB-GUI</h1>
+        
+        <div class="toolbar">
+            <div class="toolbar-section">
+                <button id="new-db-btn">New Database</button>
+                <input type="file" id="import-file" accept=".csv" />
+                <button id="import-btn">Import CSV</button>
+                <input type="file" id="import-xlsx" accept=".xlsx" />
+                <button id="import-btn-xlsx">Import XLSX</button>
+            </div>
+            <div class="toolbar-section">
+                <button id="export-csv-btn">Export CSV</button>
+                <button id="export-xlsx-btn">Export XLSX</button>
+                <button id="export-sql-btn">Export SQL</button>
+                <button id="run-query-btn">Run Query</button>
+            </div>
+        </div>
+        
+        <div class="query-box">
+            <label>SQL Query:</label>
+            <textarea id="query-input" placeholder="Enter SQL query (e.g., SELECT * FROM table1)"></textarea>
+            <button id="execute-query-btn">Execute</button>
+        </div>
+        
+        <div class="database-panel">
+            <div class="object-explorer">
+                <h3>Database Objects</h3>
+                <div class="tabs">
+                    <div class="tab active" data-tab="tables">Tables</div>
+                    <div class="tab" data-tab="queries">Queries</div>
+                    <div class="tab" data-tab="relationships">Relations</div>
+                </div>
+                
+                <div class="tab-content active" id="tables-tab">
+                    <ul class="object-list" id="tables-list">
+                        <li class="object-list-item active">Table1</li>
+                    </ul>
+                    <div class="db-action-buttons">
+                        <button id="create-table-btn">Create Table</button>
+                        <button id="delete-table-btn">Delete Table</button>
+                        <button id="design-view-btn">Design View</button>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="queries-tab">
+                    <ul class="object-list" id="queries-list">
+                        <li class="object-list-item">Query1</li>
+                    </ul>
+                    <div class="db-action-buttons">
+                        <button id="save-query-btn">Save Query</button>
+                        <button id="delete-query-btn">Delete Query</button>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="relationships-tab">
+                    <div id="relationship-diagram" style="padding: 10px; height: 200px;">
+                        <svg width="100%" height="100%">
+                            <defs>
+                                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                    <polygon points="0 0, 10 3.5, 0 7" fill="#9c27b0" />
+                                </marker>
+                            </defs>
+                            <line x1="10" y1="50" x2="190" y2="50" class="relationship-line" />
+                            <text x="10" y="40" fill="#6a1b9a" font-size="12">Table1</text>
+                            <text x="160" y="40" fill="#6a1b9a" font-size="12">Table2</text>
+                        </svg>
+                    </div>
+                    <div class="db-action-buttons">
+                        <button id="add-relation-btn">Add Relation</button>
+                        <button id="edit-relation-btn">Edit Relations</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="spreadsheet-container">
+                <table id="database-table">
+                    <thead>
+                        <tr>
+                            <th class="row-header"></th>
+                            <th class="column-header">ID (PK)</th>
+                            <th class="column-header">Field1</th>
+                            <th class="column-header">Field2</th>
+                            <th class="column-header">Field3</th>
+                            <th class="column-header">Field4</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Rows will be added dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="status-bar" id="status-bar"></div>
+        
+        <div class="app-footer">
+            VoltDB-GUI v1.0.0 | Powered by Intelligence, India
+        </div>
+    </div>
+    
+    <!-- Create Table Modal -->
+    <div class="modal-overlay" id="create-table-modal">
+        <div class="modal">
+            <h2>Create New Table</h2>
+            <form class="modal-form" id="create-table-form">
+                <div class="form-group">
+                    <label for="table-name">Table Name:</label>
+                    <input type="text" id="table-name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Fields:</label>
+                    <div id="fields-container">
+                        <div class="field-row" style="display: flex; gap: 10px; margin-bottom: 5px;">
+                            <input type="text" placeholder="Field Name" required>
+                            <select>
+                                <option value="text">Text</option>
+                                <option value="number">Number</option>
+                                <option value="date">Date</option>
+                                <option value="boolean">Boolean</option>
+                            </select>
+                            <label><input type="checkbox"> Primary Key</label>
+                        </div>
+                    </div>
+                    <button type="button" id="add-field-btn" style="align-self: flex-start; margin-top: 5px;">Add Field</button>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" id="cancel-create-table">Cancel</button>
+                    <button type="submit">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <script>
+        // Global variables
+        let DEFAULT_ROWSax = 10;
+        let DEFAULT_COLS = 6;
+        let currentData = [];
+        let activeCellCoords = { row: null, col: null };
+        let activeCellElement = null;
+        let columnLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        let database = {
+            name: "NewDatabase",
+            tables: {
+                "Table1": {
+                    fields: ["ID", "Field1", "Field2", "Field3", "Field4"],
+                    fieldTypes: ["number", "text", "text", "text", "text"],
+                    primaryKey: "ID",
+                    data: []
+                }
+            },
+            relationships: [],
+            savedQueries: {
+                "Query1": "SELECT * FROM Table1"
+            }
+        };
+        let activeTable = "Table1";
+
+        // DOM elements
+        const tableBody = document.getElementById('table-body');
+        const databaseTable = document.getElementById('database-table');
+        const headerRow = document.querySelector('#database-table thead tr');
+        const newDbBtn = document.getElementById('new-db-btn');
+        const importBtn = document.getElementById('import-btn');
+        const importBtnXlsx = document.getElementById('import-btn-xlsx');
+        const importFile = document.getElementById('import-file');
+        const importXlsx = document.getElementById('import-xlsx');
+        const exportCsvBtn = document.getElementById('export-csv-btn');
+        const exportXlsxBtn = document.getElementById('export-xlsx-btn');
+        const exportSqlBtn = document.getElementById('export-sql-btn');
+        const runQueryBtn = document.getElementById('run-query-btn');
+        const executeQueryBtn = document.getElementById('execute-query-btn');
+        const queryInput = document.getElementById('query-input');
+        const statusBar = document.getElementById('status-bar');
+        const tablesList = document.getElementById('tables-list');
+        const queriesList = document.getElementById('queries-list');
+        const createTableBtn = document.getElementById('create-table-btn');
+        const deleteTableBtn = document.getElementById('delete-table-btn');
+        const designViewBtn = document.getElementById('design-view-btn');
+        const saveQueryBtn = document.getElementById('save-query-btn');
+        const deleteQueryBtn = document.getElementById('delete-query-btn');
+        const addRelationBtn = document.getElementById('add-relation-btn');
+        const editRelationBtn = document.getElementById('edit-relation-btn');
+        const createTableModal = document.getElementById('create-table-modal');
+        const cancelCreateTableBtn = document.getElementById('cancel-create-table');
+        const createTableForm = document.getElementById('create-table-form');
+        const addFieldBtn = document.getElementById('add-field-btn');
+        const fieldsContainer = document.getElementById('fields-container');
+        const tabs = document.querySelectorAll('.tab');
+
+        // Initialize database
+        function initializeDatabase() {
+            // Clear existing data
+            database = {
+                name: "NewDatabase",
+                tables: {
+                    "Table1": {
+                        fields: ["ID", "Field1", "Field2", "Field3", "Field4"],
+                        fieldTypes: ["number", "text", "text", "text", "text"],
+                        primaryKey: "ID",
+                        data: []
+                    }
+                },
+                relationships: [],
+                savedQueries: {
+                    "Query1": "SELECT * FROM Table1"
+                }
+            };
+            activeTable = "Table1";
+            
+            // Create initial data for Table1
+            currentData = [];
+            for (let i = 0; i < DEFAULT_ROWSax; i++) {
+                const row = [];
+                row.push(i + 1); // ID field as primary key
+                for (let j = 1; j < DEFAULT_COLS; j++) {
+                    row.push('');
+                }
+                currentData.push(row);
+                database.tables[activeTable].data.push(row);
+            }
+            
+            updateObjectExplorer();
+            renderTable();
+            showStatus('New database created');
+        }
+
+        // Update the object explorer panel with current database objects
+        function updateObjectExplorer() {
+            // Update tables list
+            tablesList.innerHTML = '';
+            Object.keys(database.tables).forEach(tableName => {
+                const li = document.createElement('li');
+                li.className = 'object-list-item';
+                if (tableName === activeTable) {
+                    li.classList.add('active');
+                }
+                li.textContent = tableName;
+                li.addEventListener('click', () => {
+                    activeTable = tableName;
+                    const listItems = tablesList.querySelectorAll('.object-list-item');
+                    listItems.forEach(item => item.classList.remove('active'));
+                    li.classList.add('active');
+                    currentData = database.tables[tableName].data;
+                    renderTable();
+                });
+                tablesList.appendChild(li);
+            });
+            
+            // Update queries list
+            queriesList.innerHTML = '';
+            Object.keys(database.savedQueries).forEach(queryName => {
+                const li = document.createElement('li');
+                li.className = 'object-list-item';
+                li.textContent = queryName;
+                li.addEventListener('click', () => {
+                    queryInput.value = database.savedQueries[queryName];
+                });
+                queriesList.appendChild(li);
+            });
+        }
+
+        // Render the table based on active table data
+        function renderTable() {
+            // Clear table body
+            tableBody.innerHTML = '';
+            
+            const tableInfo = database.tables[activeTable];
+            
+            // Update table headers
+            while (headerRow.children.length > 1) {
+                headerRow.removeChild(headerRow.lastChild);
+            }
+            
+            // Add column headers
+            tableInfo.fields.forEach((field, index) => {
+                const th = document.createElement('th');
+                th.className = 'column-header';
+                th.textContent = field + (field === tableInfo.primaryKey ? ' (PK)' : '');
+                headerRow.appendChild(th);
+            });
+            
+            // Render rows
+            for (let i = 0; i < tableInfo.data.length; i++) {
+                const tr = document.createElement('tr');
+                
+                // Create row header (row number)
+                const th = document.createElement('th');
+                th.textContent = i + 1;
+                th.className = 'row-header';
+                tr.appendChild(th);
+                
+                // Create cells for this row
+                for (let j = 0; j < tableInfo.data[i].length; j++) {
+                    const td = document.createElement('td');
+                    if (tableInfo.fields[j] === tableInfo.primaryKey) {
+                        td.classList.add('primary-key');
+                    }
+                    
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'cell-input';
+                    input.dataset.row = i;
+                    input.dataset.col = j;
+                    input.value = tableInfo.data[i][j];
+                    
+                    input.addEventListener('focus', handleCellFocus);
+                    input.addEventListener('input', handleCellInput);
+                    input.addEventListener('keydown', handleCellKeydown);
+                    
+                    td.appendChild(input);
+                    tr.appendChild(td);
+                }
+                
+                tableBody.appendChild(tr);
+            }
+            
+            // Reset active cell
+            activeCellCoords = { row: null, col: null };
+            activeCellElement = null;
+        }
+
+        // Handle cell focus
+        function handleCellFocus(e) {
+            const row = parseInt(e.target.dataset.row);
+            const col = parseInt(e.target.dataset.col);
+            
+            // Remove highlight from previous active cell
+            if (activeCellElement) {
+                activeCellElement.classList.remove('active-cell');
+            }
+            
+            // Set new active cell
+            activeCellCoords = { row, col };
+            activeCellElement = e.target;
+            activeCellElement.classList.add('active-cell');
+            
+            // Update status bar with current cell info
+            const fieldName = database.tables[activeTable].fields[col];
+            const fieldType = database.tables[activeTable].fieldTypes[col];
+            statusBar.textContent = `Field: ${fieldName} | Type: ${fieldType} | Record: ${row + 1}`;
+        }
+
+        // Handle cell input
+        function handleCellInput(e) {
+            const row = parseInt(e.target.dataset.row);
+            const col = parseInt(e.target.dataset.col);
+            
+            // Validate input based on field type
+            const fieldType = database.tables[activeTable].fieldTypes[col];
+            let value = e.target.value;
+            
+            if (fieldType === 'number') {
+                // Allow only numeric input
+                if (value !== '' && isNaN(value)) {
+                    e.target.value = currentData[row][col];
+                    showStatus('Error: This field only accepts numbers');
+                    return;
+                }
+            }
+            
+            // Check primary key uniqueness
+            if (database.tables[activeTable].fields[col] === database.tables[activeTable].primaryKey) {
+                if (value !== '') {
+                    const isDuplicate = currentData.some((r, i) => i !== row && r[col] == value);
+                    if (isDuplicate) {
+                        e.target.value = currentData[row][col];
+                        showStatus('Error: Primary key must be unique');
+                        return;
+                    }
+                }
+            }
+            
+            // Update data array
+            currentData[row][col] = value;
+            database.tables[activeTable].data[row][col] = value;
+        }
+        
+        // Handle keydown in cells for navigation
+        function handleCellKeydown(e) {
+            const row = parseInt(e.target.dataset.row);
+            const col = parseInt(e.target.dataset.col);
+            
+            // Handle arrow keys
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || 
+                e.key === 'ArrowLeft' || e.key === 'ArrowRight' || 
+                e.key === 'Tab' || e.key === 'Enter') {
+                
+                let newRow = row;
+                let newCol = col;
+                
+                if (e.key === 'ArrowUp') {
+                    newRow = Math.max(0, row - 1);
+                } else if (e.key === 'ArrowDown' || e.key === 'Enter') {
+                    newRow = Math.min(currentData.length - 1, row + 1);
+                } else if (e.key === 'ArrowLeft') {
+                    newCol = Math.max(0, col - 1);
+                } else if (e.key === 'ArrowRight' || e.key === 'Tab') {
+                    newCol = Math.min(currentData[0].length - 1, col + 1);
+                    if (e.key === 'Tab') {
+                        e.preventDefault(); // Prevent tab from changing focus
+                    }
+                }
+                
+                if (newRow !== row || newCol !== col) {
+                    // Find the cell at the new coordinates
+                    const newCell = document.querySelector(`.cell-input[data-row="${newRow}"][data-col="${newCol}"]`);
+                    if (newCell) {
+                        newCell.focus();
+                    }
+                }
+            }
+        }
+
+        // Import CSV as a new table
+        function importCSV(file) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const content = e.target.result;
+                
+                // Get a table name from the file name
+                let tableName = file.name.replace(/\.[^/.]+$/, ""); // Remove extension
+                if (database.tables[tableName]) {
+                    // Table name already exists, create a unique name
+                    let counter = 1;
+                    while (database.tables[tableName + counter]) {
+                        counter++;
+                    }
+                    tableName = tableName + counter;
+                }
+                
+                // Parse CSV
+                const lines = content.split(/\r\n|\n/).filter(line => line.trim());
+                if (lines.length === 0) {
+                    showStatus('Error: Empty CSV file.');
+                    return;
+                }
+                
+                // Parse header row to get field names
+                const headerLine = lines[0];
+                const fields = parseCSVLine(headerLine);
+                
+                // Create field types (assume text by default)
+                const fieldTypes = fields.map(field => "text");
+                
+                // Parse data rows
+                const data = [];
+                for (let i = 1; i < lines.length; i++) {
+                    if (lines[i].trim()) {
+                        const rowValues = parseCSVLine(lines[i]);
+                        
+                        // Ensure all rows have the same number of columns
+                        while (rowValues.length < fields.length) {
+                            rowValues.push('');
+                        }
+                        
+                        data.push(rowValues);
+                    }
+                }
+                
+                // Add to database
+                database.tables[tableName] = {
+                    fields: fields,
+                    fieldTypes: fieldTypes,
+                    primaryKey: fields[0], // Default first column as primary key
+                    data: data
+                };
+                
+                // Set as active table
+                activeTable = tableName;
+                currentData = data;
+                
+                // Update UI
+                updateObjectExplorer();
+                renderTable();
+                showStatus(`CSV imported as new table: ${tableName}`);
+            };
+            
+            reader.readAsText(file);
+        }
+
+        // Parse a CSV line, handling quoted values
+        function parseCSVLine(line) {
+            const result = [];
+            let inQuote = false;
+            let currentValue = '';
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    inQuote = !inQuote;
+                } else if (char === ',' && !inQuote) {
+                    result.push(currentValue);
+                    currentValue = '';
+                } else {
+                    currentValue += char;
+                }
+            }
+            
+            // Add the last value
+            result.push(currentValue);
+            
+            return result;
+        }
+        
+        // Import XLSX as a new table
+        function importXLSX(file) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // Get first sheet
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    
+                    // Convert to array of arrays
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    
+                    if (jsonData.length < 2) {
+                        showStatus('Error: XLSX file has insufficient data.');
+                        return;
+                    }
+                    
+                    // Get a table name from the file name
+                    let tableName = file.name.replace(/\.[^/.]+$/, ""); // Remove extension
+                    if (database.tables[tableName]) {
+                        // Table name already exists, create a unique name
+                        let counter = 1;
+                        while (database.tables[tableName + counter]) {
+                            counter++;
+                        }
+                        tableName = tableName + counter;
+                    }
+                    
+                    // Get field names from first row
+                    const fields = jsonData[0].map(field => String(field));
+                    
+                    // Create field types (assume text by default)
+                    const fieldTypes = fields.map(field => "text");
+                    
+                    // Get data rows
+                    const tableData = jsonData.slice(1).map(row => {
+                        const newRow = [...row];
+                        while (newRow.length < fields.length) {
+                            newRow.push('');
+                        }
+                        return newRow.map(cell => cell !== null && cell !== undefined ? String(cell) : '');
+                    });
+                    
+                    // Add to database
+                    database.tables[tableName] = {
+                        fields: fields,
+                        fieldTypes: fieldTypes,
+                        primaryKey: fields[0], // Default first column as primary key
+                        data: tableData
+                    };
+                    
+                    // Set as active table
+                    activeTable = tableName;
+                    currentData = tableData;
+                    
+                    // Update UI
+                    updateObjectExplorer();
+                    renderTable();
+                    showStatus(`XLSX imported as new table: ${tableName}`);
+                    
+                } catch (error) {
+                    console.error('Error importing XLSX:', error);
+                    showStatus('Error importing XLSX file. Please check format.');
+                }
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Export to CSV
+        function exportCSV() {
+            const tableInfo = database.tables[activeTable];
+            
+            // Prepare CSV content
+            let csvContent = tableInfo.fields.join(',') + '\n'; // Header row
+            
+            for (const row of tableInfo.data) {
+                const rowValues = row.map(cell => {
+                    // Handle cells with commas, quotes, or newlines
+                    if (cell.includes(',') || cell.includes('"') || cell.includes('\n')) {
+                        return `"${cell.replace(/"/g, '""')}"`;
+                    }
+                    return cell;
+                });
+                
+                csvContent += rowValues.join(',') + '\n';
+            }
+            
+            // Get filename from user
+            let filename = prompt("Enter filename for your CSV export:", activeTable);
+            if (!filename) return; // User cancelled
+            
+            if (!filename.toLowerCase().endsWith('.csv')) {
+                filename += '.csv';
+            }
+            
+            // Create a blob and download link
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            downloadFile(blob, filename);
+            
+            showStatus(`Table '${activeTable}' exported to CSV successfully.`);
+        }
+        
+        // Export to XLSX
+        function exportXLSX() {
+            try {
+                const tableInfo = database.tables[activeTable];
+                
+                // Prepare data with headers as first row
+                const exportData = [tableInfo.fields, ...tableInfo.data];
+                
+                // Convert data to worksheet
+                const ws = XLSX.utils.aoa_to_sheet(exportData);
+                
+                // Create workbook and add the worksheet
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, activeTable);
+                
+                // Get filename from user
+                let filename = prompt("Enter filename for your XLSX export:", activeTable);
+                if (!filename) return; // User cancelled
+                
+                if (!filename.toLowerCase().endsWith('.xlsx')) {
+                    filename += '.xlsx';
+                }
+                
+                // Generate XLSX file and trigger download
+                XLSX.writeFile(wb, filename);
+                
+                showStatus(`Table '${activeTable}' exported to XLSX successfully.`);
+                
+            } catch (error) {
+                console.error('Error exporting XLSX:', error);
+                showStatus('Error exporting XLSX file.');
+            }
+        }
+
+        // Export to SQL
+        function exportSQL() {
+            try {
+                const tableInfo = database.tables[activeTable];
+                let sqlContent = '';
+                
+                // CREATE TABLE statement
+                sqlContent += `CREATE TABLE ${activeTable} (\n`;
+                tableInfo.fields.forEach((field, index) => {
+                    const fieldType = mapToSQLType(tableInfo.fieldTypes[index]);
+                    sqlContent += `    ${field} ${fieldType}`;
+                    
+                    if (field === tableInfo.primaryKey) {
+                        sqlContent += ' PRIMARY KEY';
+                    }
+                    
+                    if (index < tableInfo.fields.length - 1) {
+                        sqlContent += ',\n';
+                    }
+                });
+                sqlContent += '\n);\n\n';
+                
+                // INSERT statements
+                tableInfo.data.forEach(row => {
+                    if (row.some(cell => cell !== '')) { // Skip empty rows
+                        sqlContent += `INSERT INTO ${activeTable} (${tableInfo.fields.join(', ')}) VALUES (`;
+                        row.forEach((cell, index) => {
+                            const fieldType = tableInfo.fieldTypes[index];
+                            
+                            if (fieldType === 'text' || fieldType === 'date') {
+                                // Escape single quotes and wrap in quotes
+                                sqlContent += `'${cell.replace(/'/g, "''")}'`;
+                            } else if (cell === '') {
+                                sqlContent += 'NULL';
+                            } else {
+                                sqlContent += cell;
+                            }
+                            
+                            if (index < row.length - 1) {
+                                sqlContent += ', ';
+                            }
+                        });
+                        sqlContent += ');\n';
+                    }
+                });
+                
+                // Get filename from user
+                let filename = prompt("Enter filename for your SQL export:", activeTable);
+                if (!filename) return; // User cancelled
+                
+                if (!filename.toLowerCase().endsWith('.sql')) {
+                    filename += '.sql';
+                }
+                
+                // Create a blob and download link
+                const blob = new Blob([sqlContent], { type: 'text/plain;charset=utf-8;' });
+                downloadFile(blob, filename);
+                
+                showStatus(`Table '${activeTable}' exported to SQL successfully.`);
+                
+            } catch (error) {
+                console.error('Error exporting SQL:', error);
+                showStatus('Error exporting SQL file.');
+            }
+        }
+        
+        // Map internal field types to SQL types
+        function mapToSQLType(fieldType) {
+            switch (fieldType) {
+                case 'text': return 'VARCHAR(255)';
+                case 'number': return 'NUMERIC';
+                case 'date': return 'DATE';
+                case 'boolean': return 'BOOLEAN';
+                default: return 'VARCHAR(255)';
+            }
+        }
+        
+        // Helper function for downloading files
+        function downloadFile(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            
+            // Clean up
+            setTimeout(function() {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }, 0);
+        }
+
+        // Execute SQL-like query
+        function executeQuery(query) {
+            const trimmedQuery = query.trim().toUpperCase();
+            
+            try {
+                if (trimmedQuery.startsWith('SELECT')) {
+                    // Basic SELECT implementation
+                    const regex = /SELECT\s+(.*)\s+FROM\s+(\w+)(?:\s+WHERE\s+(.*))?/i;
+                    const match = query.match(regex);
+                    
+                    if (!match) {
+                        showStatus('Invalid SELECT query format.');
+                        return;
+                    }
+                    
+                    const fields = match[1].trim();
+                    const tableName = match[2].trim();
+                    const whereClause = match[3] ? match[3].trim() : null;
+                    
+                    if (!database.tables[tableName]) {
+                        showStatus(`Table '${tableName}' not found.`);
+                        return;
+                    }
+                    
+                    const tableInfo = database.tables[tableName];
+                    let selectedFields = [];
+                    
+                    if (fields === '*') {
+                        selectedFields = [...tableInfo.fields];
+                    } else {
+                        selectedFields = fields.split(',').map(f => f.trim());
+                        // Validate that all fields exist
+                        for (const field of selectedFields) {
+                            if (!tableInfo.fields.includes(field)) {
+                                showStatus(`Field '${field}' not found in table '${tableName}'.`);
+                                return;
+                            }
+                        }
+                    }
+                    
+                    // Create a result table
+                    const resultTable = {
+                        fields: selectedFields,
+                        fieldTypes: selectedFields.map(field => {
+                            const index = tableInfo.fields.indexOf(field);
+                            return tableInfo.fieldTypes[index];
+                        }),
+                        primaryKey: null,
+                        data: []
+                    };
+                    
+                    // Filter data based on WHERE clause
+                    let filteredData = [...tableInfo.data];
+                    if (whereClause) {
+                        try {
+                            filteredData = applyWhereClause(tableInfo, filteredData, whereClause);
+                        } catch (error) {
+                            showStatus(`Error in WHERE clause: ${error.message}`);
+                            return;
+                        }
+                    }
+                    
+                    // Project selected fields
+                    for (const row of filteredData) {
+                        const resultRow = [];
+                        for (const field of selectedFields) {
+                            const index = tableInfo.fields.indexOf(field);
+                            resultRow.push(row[index]);
+                        }
+                        resultTable.data.push(resultRow);
+                    }
+                    
+                    // Create a temporary table to display results
+                    const resultTableName = "_QueryResult";
+                    database.tables[resultTableName] = resultTable;
+                    
+                    // Set as active table and update UI
+                    const previousTable = activeTable;
+                    activeTable = resultTableName;
+                    currentData = resultTable.data;
+                    
+                    renderTable();
+                    showStatus(`Query executed. Showing ${resultTable.data.length} records.`);
+                    
+                    // Add back button to return to previous table
+                    const backBtn = document.createElement('button');
+                    backBtn.textContent = 'Back to ' + previousTable;
+                    backBtn.style.marginLeft = '10px';
+                    backBtn.addEventListener('click', () => {
+                        // Remove temporary result table
+                        delete database.tables[resultTableName];
+                        
+                        // Return to previous table
+                        activeTable = previousTable;
+                        currentData = database.tables[previousTable].data;
+                        updateObjectExplorer();
+                        renderTable();
+                        statusBar.removeChild(backBtn);
+                    });
+                    
+                    statusBar.appendChild(backBtn);
+                } else if (trimmedQuery.startsWith('INSERT INTO')) {
+                    // Basic INSERT implementation
+                    const regex = /INSERT\s+INTO\s+(\w+)\s*\((.*?)\)\s*VALUES\s*\((.*?)\)/i;
+                    const match = query.match(regex);
+                    
+                    if (!match) {
+                        showStatus('Invalid INSERT query format.');
+                        return;
+                    }
+                    
+                    const tableName = match[1].trim();
+                    const fields = match[2].split(',').map(f => f.trim());
+                    const values = parseInsertValues(match[3]);
+                    
+                    if (!database.tables[tableName]) {
+                        showStatus(`Table '${tableName}' not found.`);
+                        return;
+                    }
+                    
+                    const tableInfo = database.tables[tableName];
+                    
+                    // Validate fields
+                    for (const field of fields) {
+                        if (!tableInfo.fields.includes(field)) {
+                            showStatus(`Field '${field}' not found in table '${tableName}'.`);
+                            return;
+                        }
+                    }
+                    
+                    // Create new row
+                    const newRow = Array(tableInfo.fields.length).fill('');
+                    
+                    // Fill values
+                    for (let i = 0; i < fields.length; i++) {
+                        const fieldIndex = tableInfo.fields.indexOf(fields[i]);
+                        newRow[fieldIndex] = values[i];
+                    }
+                    
+                    // Validate primary key
+                    if (tableInfo.primaryKey) {
+                        const pkIndex = tableInfo.fields.indexOf(tableInfo.primaryKey);
+                        if (newRow[pkIndex] !== '' && tableInfo.data.some(row => row[pkIndex] == newRow[pkIndex])) {
+                            showStatus(`Error: Duplicate primary key value '${newRow[pkIndex]}'.`);
+                            return;
+                        }
+                    }
+                    
+                    // Add to table
+                    tableInfo.data.push(newRow);
+                    
+                    // Update UI if current table
+                    if (activeTable === tableName) {
+                        currentData = tableInfo.data;
+                        renderTable();
+                    }
+                    
+                    showStatus(`1 record inserted into '${tableName}'.`);
+                } else if (trimmedQuery.startsWith('UPDATE')) {
+                    // Basic UPDATE implementation
+                    const regex = /UPDATE\s+(\w+)\s+SET\s+(.*?)(?:\s+WHERE\s+(.*))?/i;
+                    const match = query.match(regex);
+                    
+                    if (!match) {
+                        showStatus('Invalid UPDATE query format.');
+                        return;
+                    }
+                    
+                    const tableName = match[1].trim();
+                    const setClause = match[2].trim();
+                    const whereClause = match[3] ? match[3].trim() : null;
+                    
+                    if (!database.tables[tableName]) {
+                        showStatus(`Table '${tableName}' not found.`);
+                        return;
+                    }
+                    
+                    const tableInfo = database.tables[tableName];
+                    
+                    // Parse SET clause
+                    const setExpressions = setClause.split(',').map(expr => {
+                        const [field, value] = expr.split('=').map(part => part.trim());
+                        return { field, value: value.replace(/^'|'$/g, '') }; // Remove quotes if present
+                    });
+                    
+                    // Validate fields
+                    for (const expr of setExpressions) {
+                        if (!tableInfo.fields.includes(expr.field)) {
+                            showStatus(`Field '${expr.field}' not found in table '${tableName}'.`);
+                            return;
+                        }
+                    }
+                    
+                    // Find rows to update
+                    let rowsToUpdate = [];
+                    if (whereClause) {
+                        try {
+                            rowsToUpdate = applyWhereClause(tableInfo, tableInfo.data, whereClause, true);
+                        } catch (error) {
+                            showStatus(`Error in WHERE clause: ${error.message}`);
+                            return;
+                        }
+                    } else {
+                        // Update all rows
+                        rowsToUpdate = tableInfo.data.map((_, index) => index);
+                    }
+                    
+                    // Update rows
+                    for (const rowIndex of rowsToUpdate) {
+                        for (const expr of setExpressions) {
+                            const fieldIndex = tableInfo.fields.indexOf(expr.field);
+                            tableInfo.data[rowIndex][fieldIndex] = expr.value;
+                        }
+                    }
+                    
+                    // Update UI if current table
+                    if (activeTable === tableName) {
+                        currentData = tableInfo.data;
+                        renderTable();
+                    }
+                    
+                    showStatus(`${rowsToUpdate.length} record(s) updated in '${tableName}'.`);
+                } else if (trimmedQuery.startsWith('DELETE FROM')) {
+                    // Basic DELETE implementation
+                    const regex = /DELETE\s+FROM\s+(\w+)(?:\s+WHERE\s+(.*))?/i;
+                    const match = query.match(regex);
+                    
+                    if (!match) {
+                        showStatus('Invalid DELETE query format.');
+                        return;
+                    }
+                    
+                    const tableName = match[1].trim();
+                    const whereClause = match[2] ? match[2].trim() : null;
+                    
+                    if (!database.tables[tableName]) {
+                        showStatus(`Table '${tableName}' not found.`);
+                        return;
+                    }
+                    
+                    const tableInfo = database.tables[tableName];
+                    
+                    // Find rows to delete
+                    let rowsToDelete = [];
+                    if (whereClause) {
+                        try {
+                            rowsToDelete = applyWhereClause(tableInfo, tableInfo.data, whereClause, true);
+                        } catch (error) {
+                            showStatus(`Error in WHERE clause: ${error.message}`);
+                            return;
+                        }
+                    } else {
+                        // Delete all rows
+                        rowsToDelete = Array.from({ length: tableInfo.data.length }, (_, i) => i);
+                    }
+                    
+                    // Delete in reverse order to avoid index shifting
+                    rowsToDelete.sort((a, b) => b - a);
+                    for (const rowIndex of rowsToDelete) {
+                        tableInfo.data.splice(rowIndex, 1);
+                    }
+                    
+                    // Update UI if current table
+                    if (activeTable === tableName) {
+                        currentData = tableInfo.data;
+                        renderTable();
+                    }
+                    
+                    showStatus(`${rowsToDelete.length} record(s) deleted from '${tableName}'.`);
+                } else if (trimmedQuery.startsWith('CREATE TABLE')) {
+                    // Basic CREATE TABLE implementation
+                    const regex = /CREATE\s+TABLE\s+(\w+)\s*\((.*)\)/i;
+                    const match = query.match(regex);
+                    
+                    if (!match) {
+                        showStatus('Invalid CREATE TABLE query format.');
+                        return;
+                    }
+                    
+                    const tableName = match[1].trim();
+                    const columnsDefinition = match[2].trim();
+                    
+                    if (database.tables[tableName]) {
+                        showStatus(`Table '${tableName}' already exists.`);
+                        return;
+                    }
+                    
+                    // Parse column definitions
+                    const columnDefs = columnsDefinition.split(',').map(col => col.trim());
+                    const fields = [];
+                    const fieldTypes = [];
+                    let primaryKey = null;
+                    
+                    for (const colDef of columnDefs) {
+                        const parts = colDef.split(/\s+/);
+                        const fieldName = parts[0];
+                        let fieldType = "text";
+                        
+                        // Determine field type from SQL type
+                        if (parts.length > 1) {
+                            const sqlType = parts[1].toUpperCase();
+                            if (sqlType.includes('INT') || sqlType.includes('NUMERIC') || sqlType.includes('DECIMAL')) {
+                                fieldType = "number";
+                            } else if (sqlType.includes('DATE')) {
+                                fieldType = "date";
+                            } else if (sqlType.includes('BOOL')) {
+                                fieldType = "boolean";
+                            }
+                        }
+                        
+                        fields.push(fieldName);
+                        fieldTypes.push(fieldType);
+                        
+                        // Check for primary key
+                        if (colDef.toUpperCase().includes('PRIMARY KEY')) {
+                            primaryKey = fieldName;
+                        }
+                    }
+                    
+                    // Default to first column as primary key if none specified
+                    if (!primaryKey && fields.length > 0) {
+                        primaryKey = fields[0];
+                    }
+                    
+                    // Create the new table
+                    database.tables[tableName] = {
+                        fields: fields,
+                        fieldTypes: fieldTypes,
+                        primaryKey: primaryKey,
+                        data: []
+                    };
+                    
+                    // Update UI
+                    updateObjectExplorer();
+                    showStatus(`Table '${tableName}' created successfully.`);
+                } else {
+                    showStatus('Unsupported SQL command. Only basic SELECT, INSERT, UPDATE, DELETE, and CREATE TABLE are supported.');
+                }
+            } catch (error) {
+                console.error('Query execution error:', error);
+                showStatus(`Error executing query: ${error.message}`);
+            }
+        }
+        
+        // Parse values from INSERT statement
+        function parseInsertValues(valuesStr) {
+            const values = [];
+            let currentValue = '';
+            let inQuote = false;
+            
+            for (let i = 0; i < valuesStr.length; i++) {
+                const char = valuesStr[i];
+                
+                if (char === "'" && (i === 0 || valuesStr[i - 1] !== '\\')) {
+                    inQuote = !inQuote;
+                } else if (char === ',' && !inQuote) {
+                    values.push(currentValue.replace(/^'|'$/g, '')); // Remove quotes
+                    currentValue = '';
+                } else {
+                    currentValue += char;
+                }
+            }
+            
+            if (currentValue) {
+                values.push(currentValue.replace(/^'|'$/g, '')); // Remove quotes
+            }
+            
+            return values;
+        }
+        
+        // Apply WHERE clause to filter data
+        function applyWhereClause(tableInfo, data, whereClause, returnIndices = false) {
+            // Very basic WHERE clause handling - only supports simple equality conditions
+            const result = [];
+            
+            // Parse condition (only supports field = value for now)
+            const condition = whereClause.split('=').map(part => part.trim());
+            if (condition.length !== 2) {
+                throw new Error('Only simple equality conditions (field = value) are supported');
+            }
+            
+            const field = condition[0];
+            let value = condition[1].replace(/^'|'$/g, ''); // Remove quotes if present
+            
+            const fieldIndex = tableInfo.fields.indexOf(field);
+            if (fieldIndex === -1) {
+                throw new Error(`Field '${field}' not found`);
+            }
+            
+            // Filter data
+            data.forEach((row, rowIndex) => {
+                if (String(row[fieldIndex]) === String(value)) {
+                    if (returnIndices) {
+                        result.push(rowIndex);
+                    } else {
+                        result.push(row);
+                    }
+                }
+            });
+            
+            return result;
+        }
+
+        // Show status message
+        function showStatus(message) {
+            statusBar.textContent = message;
+            
+            // Clear status after 5 seconds
+            setTimeout(function() {
+                if (statusBar.textContent === message) {
+                    statusBar.textContent = '';
+                }
+            }, 5000);
+        }
+
+        // Create a new table
+        function createTable() {
+            const tableName = document.getElementById('table-name').value.trim();
+            
+            if (!tableName) {
+                alert('Please enter a table name');
+                return;
+            }
+            
+            if (database.tables[tableName]) {
+                alert(`Table '${tableName}' already exists`);
+                return;
+            }
+            
+            // Collect field information
+            const fieldRows = fieldsContainer.querySelectorAll('.field-row');
+            const fields = [];
+            const fieldTypes = [];
+            let primaryKey = null;
+            
+            for (const row of fieldRows) {
+                const fieldName = row.querySelector('input[type="text"]').value.trim();
+                const fieldType = row.querySelector('select').value;
+                const isPK = row.querySelector('input[type="checkbox"]').checked;
+                
+                if (!fieldName) {
+                    alert('All fields must have names');
+                    return;
+                }
+                
+                if (fields.includes(fieldName)) {
+                    alert(`Duplicate field name: ${fieldName}`);
+                    return;
+                }
+                
+                fields.push(fieldName);
+                fieldTypes.push(fieldType);
+                
+                if (isPK) {
+                    if (primaryKey) {
+                        alert('Only one field can be a primary key');
+                        return;
+                    }
+                    primaryKey = fieldName;
+                }
+            }
+            
+            if (fields.length === 0) {
+                alert('Table must have at least one field');
+                return;
+            }
+            
+            // If no primary key was selected, default to first field
+            if (!primaryKey) {
+                primaryKey = fields[0];
+            }
+            
+            // Create the table
+            database.tables[tableName] = {
+                fields: fields,
+                fieldTypes: fieldTypes,
+                primaryKey: primaryKey,
+                data: []
+            };
+            
+            // Set as active table
+            activeTable = tableName;
+            currentData = [];
+            
+            // Update UI
+            updateObjectExplorer();
+            renderTable();
+            showStatus(`Table '${tableName}' created successfully`);
+            
+            // Close modal
+            createTableModal.style.display = 'none';
+        }
+        
+        // Save the current query
+        function saveQuery() {
+            const queryText = queryInput.value.trim();
+            
+            if (!queryText) {
+                showStatus('Cannot save empty query');
+                return;
+            }
+            
+            const queryName = prompt('Enter a name for this query:');
+            if (!queryName) return; // User cancelled
+            
+            database.savedQueries[queryName] = queryText;
+            updateObjectExplorer();
+            showStatus(`Query saved as '${queryName}'`);
+        }
+        
+        // Delete the selected table
+        function deleteTable() {
+            if (confirm(`Are you sure you want to delete table '${activeTable}'?`)) {
+                delete database.tables[activeTable];
+                
+                // Set first available table as active or create a new one
+                const tableNames = Object.keys(database.tables);
+                if (tableNames.length > 0) {
+                    activeTable = tableNames[0];
+                    currentData = database.tables[activeTable].data;
+                } else {
+                    // Create a default table if none left
+                    database.tables['Table1'] = {
+                        fields: ["ID", "Field1", "Field2", "Field3", "Field4"],
+                        fieldTypes: ["number", "text", "text", "text", "text"],
+                        primaryKey: "ID",
+                        data: []
+                    };
+                    activeTable = 'Table1';
+                    currentData = [];
+                }
+                
+                updateObjectExplorer();
+                renderTable();
+                showStatus(`Table deleted successfully`);
+            }
+        }
+        
+        // Delete the selected query
+        function deleteQuery() {
+            const selectedQuery = queriesList.querySelector('.active');
+            if (!selectedQuery) {
+                showStatus('Please select a query to delete');
+                return;
+            }
+            
+            const queryName = selectedQuery.textContent;
+            if (confirm(`Are you sure you want to delete query '${queryName}'?`)) {
+                delete database.savedQueries[queryName];
+                updateObjectExplorer();
+                showStatus(`Query '${queryName}' deleted successfully`);
+            }
+        }
+        
+        // Show design view for the active table
+        function showDesignView() {
+            // This functionality would be too complex for this demo
+            showStatus('Design view not implemented in this demo');
+        }
+
+        // Event listeners
+        newDbBtn.addEventListener('click', initializeDatabase);
+        
+        importBtn.addEventListener('click', function() {
+            importFile.click();
+        });
+        
+        importFile.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                importCSV(e.target.files[0]);
+                e.target.value = ''; // Reset file input
+            }
+        });
+        
+        importBtnXlsx.addEventListener('click', function() {
+            importXlsx.click();
+        });
+        
+        importXlsx.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                importXLSX(e.target.files[0]);
+                e.target.value = ''; // Reset file input
+            }
+        });
+        
+        exportCsvBtn.addEventListener('click', exportCSV);
+        exportXlsxBtn.addEventListener('click', exportXLSX);
+        exportSqlBtn.addEventListener('click', exportSQL);
+        
+        runQueryBtn.addEventListener('click', function() {
+            document.querySelector('[data-tab="queries"]').click();
+            queryInput.focus();
+        });
+        
+    executeQueryBtn.addEventListener('click', function() {
+    const query = queryInput.value.trim();
+    if (query) {
+        executeQuery(query);
+    } else {
+        showStatus('Please enter a SQL query');
+    }
+});
+
+createTableBtn.addEventListener('click', function() {
+    // Reset form
+    document.getElementById('table-name').value = '';
+    while (fieldsContainer.children.length > 1) {
+        fieldsContainer.removeChild(fieldsContainer.lastChild);
+    }
+    fieldsContainer.querySelector('input[type="text"]').value = '';
+    fieldsContainer.querySelector('select').value = 'text';
+    fieldsContainer.querySelector('input[type="checkbox"]').checked = false;
+    
+    // Show modal
+    createTableModal.style.display = 'flex';
+});
+
+cancelCreateTableBtn.addEventListener('click', function() {
+    createTableModal.style.display = 'none';
+});
+
+addFieldBtn.addEventListener('click', function() {
+    const fieldRow = document.createElement('div');
+    fieldRow.className = 'field-row';
+    fieldRow.style.display = 'flex';
+    fieldRow.style.gap = '10px';
+    fieldRow.style.marginBottom = '5px';
+    
+    fieldRow.innerHTML = `
+        <input type="text" placeholder="Field Name" required>
+        <select>
+            <option value="text">Text</option>
+            <option value="number">Number</option>
+            <option value="date">Date</option>
+            <option value="boolean">Boolean</option>
+        </select>
+        <label><input type="checkbox"> Primary Key</label>
+        <button type="button" class="remove-field">×</button>
+    `;
+    
+    fieldRow.querySelector('.remove-field').addEventListener('click', function() {
+        fieldsContainer.removeChild(fieldRow);
+    });
+    
+    fieldsContainer.appendChild(fieldRow);
+});
+
+createTableForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    createTable();
+});
+
+saveQueryBtn.addEventListener('click', saveQuery);
+deleteQueryBtn.addEventListener('click', deleteQuery);
+deleteTableBtn.addEventListener('click', deleteTable);
+designViewBtn.addEventListener('click', showDesignView);
+
+// Tab switching
+tabs.forEach(tab => {
+    tab.addEventListener('click', function() {
+        const tabName = this.getAttribute('data-tab');
+        
+        // Update active tab
+        tabs.forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        
+        // Show corresponding content
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        document.getElementById(tabName + '-tab').classList.add('active');
+    });
+});
+
+// Handle clicks in queries list
+queriesList.addEventListener('click', function(e) {
+    if (e.target.classList.contains('object-list-item')) {
+        const items = queriesList.querySelectorAll('.object-list-item');
+        items.forEach(item => item.classList.remove('active'));
+        e.target.classList.add('active');
+    }
+});
+
+// Handle adding relations
+addRelationBtn.addEventListener('click', function() {
+    // This functionality would be too complex for this demo
+    showStatus('Add relation feature not implemented in this demo');
+});
+
+editRelationBtn.addEventListener('click', function() {
+    // This functionality would be too complex for this demo
+    showStatus('Edit relations feature not implemented in this demo');
+});
+
+// Initialize the database on load
+window.addEventListener('load', function() {
+    initializeDatabase();
+});
+</script>
+</body>
+</html>

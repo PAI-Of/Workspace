@@ -410,7 +410,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Document</title>
+    <title>${file_title}</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -481,9 +481,11 @@
             link.href = URL.createObjectURL(blob);
             let a = confirm("Would you like to save as HTML, default Writer? OK=writer NO=html")
             if (a == true){
-                link.download = prompt() + ".writer";
+                var file_title = prompt() + ".writer"
+                link.download = file_title;
             } else {
-                link.download = prompt() + ".html";
+                file_title = prompt() + ".html"
+                link.download = file_title;
             }
             link.click();
             
@@ -548,7 +550,7 @@
 </html>
 <!--
 Pointer Workspace / Pointer Writer
-v1.5.0 / 2025.1a0
+v1.5.2 / 2025.1a0
 Copyright (c) 2025-2030 Powered Intelligence . India
 
 -->

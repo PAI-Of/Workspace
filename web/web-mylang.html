@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimpleWebLang - A Web-Based Programming Language</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            display: flex;
+            max-width: 1200px;
+            margin: 0 auto;
+            gap: 20px;
+            height: calc(100vh - 140px);
+        }
+        .code-section, .output-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .section-header {
+            padding: 12px 20px;
+            background-color: #2c3e50;
+            color: white;
+            font-weight: bold;
+        }
+        #code-editor {
+            flex: 1;
+            resize: none;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 15px;
+            border: none;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        #output {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            font-family: 'Courier New', Courier, monospace;
+            white-space: pre-wrap;
+            background-color: #f8f8f8;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            padding: 15px;
+            background-color: #f0f0f0;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .examples {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .example-code {
+            background-color: #f8f8f8;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: 'Courier New', Courier, monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>SimpleWebLang</h1>
+        <p>A simple programming language with HTTP request capabilities</p>
+    </div>
+    
+    <div class="container">
+        <div class="code-section">
+            <div class="section-header">Code Editor</div>
+            <textarea id="code-editor">// Example code
+@url https://pai-of.github.io/Workspace/web/present/present.mylang
+
+// Print some text
+print("Hello, world!");
+
+// Variables
+var x = 10;
+var y = 20;
+print("Sum: " + (x + y));
+
+// While loop
+var counter = 0;
+while (counter < 5) {
+    print("Counter: " + counter);
+    counter = counter + 1;
+}
+
+// Try-catch example
+try {
+    print("Try block executing");
+    throw "Example error";
+} catch (err) {
+    print("Caught error: " + err);
+}
+
+// HTTP request
+try {
+    // This is a mock request (won't actually execute)
+    var response = request("https://api.github.com/POST", "Hello Github!");
+    print("Response received: " + response);
+} catch (err) {
+    print("Request error: " + err);
+}</textarea>
+            <div class="controls">
+                <button id="run-btn">Run Code</button>
+                <button id="clear-btn">Clear Output</button>
+            </div>
+        </div>
+        <div class="output-section">
+            <div class="section-header">Output</div>
+            <div id="output"></div>
+        </div>
+    </div>
+
+    <div class="examples">
+        <h3>Language Features</h3>
+        <ul>
+            <li><strong>@url</strong> - Import external libraries</li>
+            <li><strong>print()</strong> - Output text</li>
+            <li><strong>var</strong> - Declare variables</li>
+            <li><strong>while</strong> - Create loops</li>
+            <li><strong>try/catch</strong> - Handle errors</li>
+            <li><strong>request()</strong> - Make HTTP requests</li>
+        </ul>
+    </div>
+
+    <script>
+        // SimpleWebLang Interpreter
+        class SimpleWebLang {
+            constructor() {
+                this.variables = {};
+                this.imports = [];
+                this.output = "";
+            }
+
+            interpret(code) {
+                this.output = "";
+                this.variables = {};
+                
+                try {
+                    // Process imports (@url directives)
+                    const lines = code.split('\n');
+                    this.imports = [];
+                    
+                    for (let i = 0; i < lines.length; i++) {
+                        const line = lines[i].trim();
+                        if (line.startsWith('@url')) {
+                            const url = line.substring(4).trim();
+                            this.imports.push(url);
+                            this.log(`Importing from: ${url}`);
+                        }
+                    }
+                    
+                    // Parse and execute the code
+                    this.executeCode(code);
+                    
+                } catch (error) {
+                    this.log(`Execution Error: ${error}`);
+                }
+                
+                return this.output;
+            }
+            
+            executeCode(code) {
+                // Remove comments
+                code = code.replace(/\/\/.*$/gm, '');
+                
+                // Process the actual code blocks
+                const codeBlocks = this.identifyCodeBlocks(code);
+                
+                for (const block of codeBlocks) {
+                    if (block.type === 'print') {
+                        this.executePrint(block.content);
+                    } else if (block.type === 'variable') {
+                        this.executeVariableAssignment(block.content);
+                    } else if (block.type === 'while') {
+                        this.executeWhileLoop(block.condition, block.body);
+                    } else if (block.type === 'try') {
+                        this.executeTryCatch(block.tryBlock, block.catchBlock, block.errorVar);
+                    } else if (block.type === 'request') {
+                        this.executeRequest(block.url, block.data);
+                    }
+                }
+            }
+            
+            identifyCodeBlocks(code) {
+                // This is a simplified parser for demonstration purposes
+                const blocks = [];
+                
+                // Remove @url directives
+                code = code.replace(/@url.*$/gm, '');
+                
+                // Find print statements
+                const printRegex = /print\(["'](.*?)["']\);?/g;
+                let printMatch;
+                while ((printMatch = printRegex.exec(code)) !== null) {
+                    blocks.push({
+                        type: 'print',
+                        content: printMatch[1]
+                    });
+                }
+                
+                // Find variable assignments
+                const varRegex = /var\s+(\w+)\s*=\s*(.+?);/g;
+                let varMatch;
+                while ((varMatch = varRegex.exec(code)) !== null) {
+                    blocks.push({
+                        type: 'variable',
+                        content: {
+                            name: varMatch[1],
+                            value: this.evaluateExpression(varMatch[2])
+                        }
+                    });
+                }
+                
+                // Find while loops (simplified)
+                const whileRegex = /while\s*\((.+?)\)\s*{([\s\S]*?)}/g;
+                let whileMatch;
+                while ((whileMatch = whileRegex.exec(code)) !== null) {
+                    blocks.push({
+                        type: 'while',
+                        condition: whileMatch[1],
+                        body: whileMatch[2]
+                    });
+                }
+                
+                // Find try-catch blocks (simplified)
+                const tryRegex = /try\s*{([\s\S]*?)}\s*catch\s*\((\w+)\)\s*{([\s\S]*?)}/g;
+                let tryMatch;
+                while ((tryMatch = tryRegex.exec(code)) !== null) {
+                    blocks.push({
+                        type: 'try',
+                        tryBlock: tryMatch[1],
+                        errorVar: tryMatch[2],
+                        catchBlock: tryMatch[3]
+                    });
+                }
+                
+                // Find request calls
+                const requestRegex = /request\(["'](.+?)["'],\s*["'](.+?)["']\);?/g;
+                let requestMatch;
+                while ((requestMatch = requestRegex.exec(code)) !== null) {
+                    blocks.push({
+                        type: 'request',
+                        url: requestMatch[1],
+                        data: requestMatch[2]
+                    });
+                }
+                
+                return blocks;
+            }
+            
+            evaluateExpression(expr) {
+                // Very simplified expression evaluation
+                try {
+                    // Replace variable references with their values
+                    for (const varName in this.variables) {
+                        const re = new RegExp('\\b' + varName + '\\b', 'g');
+                        expr = expr.replace(re, this.variables[varName]);
+                    }
+                    
+                    // Basic arithmetic - this is unsafe in a real interpreter
+                    // but fine for demonstration purposes
+                    return eval(expr);
+                } catch (error) {
+                    this.log(`Expression evaluation error: ${error}`);
+                    return null;
+                }
+            }
+            
+            executePrint(content) {
+                // Replace variable references
+                for (const varName in this.variables) {
+                    const re = new RegExp('\\{' + varName + '\\}', 'g');
+                    content = content.replace(re, this.variables[varName]);
+                }
+                
+                this.log(content);
+            }
+            
+            executeVariableAssignment(varInfo) {
+                this.variables[varInfo.name] = varInfo.value;
+            }
+            
+            executeWhileLoop(condition, body) {
+                // Very simplified loop execution
+                let iterations = 0;
+                const maxIterations = 100; // Safety limit
+                
+                while (this.evaluateCondition(condition) && iterations < maxIterations) {
+                    this.executeCode(body);
+                    iterations++;
+                }
+                
+                if (iterations >= maxIterations) {
+                    this.log("Warning: Maximum loop iterations reached");
+                }
+            }
+            
+            evaluateCondition(condition) {
+                // Replace variable references with their values
+                for (const varName in this.variables) {
+                    const re = new RegExp('\\b' + varName + '\\b', 'g');
+                    condition = condition.replace(re, this.variables[varName]);
+                }
+                
+                try {
+                    return eval(condition);
+                } catch (error) {
+                    this.log(`Condition evaluation error: ${error}`);
+                    return false;
+                }
+            }
+            
+            executeTryCatch(tryBlock, catchBlock, errorVar) {
+                try {
+                    this.executeCode(tryBlock);
+                } catch (error) {
+                    // Save the error to the error variable
+                    this.variables[errorVar] = error.toString();
+                    this.executeCode(catchBlock);
+                }
+            }
+            
+            executeRequest(url, data) {
+                // This is a mock implementation for demonstration purposes
+                this.log(`Simulating HTTP request to: ${url}`);
+                this.log(`Request data: ${data}`);
+                
+                // In a real implementation, we would use fetch() here
+                // But for demo, we'll just mock a response
+                setTimeout(() => {
+                    this.log(`Received mock response from ${url}`);
+                }, 500);
+                
+                return "Mock response data";
+            }
+            
+            log(message) {
+                this.output += message + "\n";
+            }
+        }
+
+        // Set up the UI
+        document.addEventListener('DOMContentLoaded', () => {
+            const codeEditor = document.getElementById('code-editor');
+            const outputElement = document.getElementById('output');
+            const runButton = document.getElementById('run-btn');
+            const clearButton = document.getElementById('clear-btn');
+            
+            const interpreter = new SimpleWebLang();
+            
+            runButton.addEventListener('click', () => {
+                const code = codeEditor.value;
+                const result = interpreter.interpret(code);
+                outputElement.textContent = result;
+            });
+            
+            clearButton.addEventListener('click', () => {
+                outputElement.textContent = '';
+            });
+        });
+    </script>
+</body>
+</html>
