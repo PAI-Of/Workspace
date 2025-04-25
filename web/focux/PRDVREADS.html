@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRDV Reads | Story Library</title>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --success: #4cc9f0;
+            --warning: #f72585;
+            --info: #4895ef;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark);
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 2rem 1rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .tagline {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        
+        .search-container {
+            display: flex;
+            margin-bottom: 2rem;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .search-box {
+            flex: 1;
+            min-width: 300px;
+            position: relative;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            border-radius: 50px;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            font-size: 1rem;
+        }
+        
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.3);
+        }
+        
+        .search-icon {
+            position: absolute;
+            right: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #888;
+        }
+        
+        .filter-dropdown {
+            padding: 1rem 1.5rem;
+            border-radius: 50px;
+            border: 1px solid #ddd;
+            font-size: 1rem;
+            background-color: white;
+            cursor: pointer;
+            min-width: 150px;
+        }
+        
+        .filter-dropdown:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.3);
+        }
+        
+        .books-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+        
+        .book-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .book-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+        
+        .book-icon {
+            height: 200px;
+            background-position: center;
+            background-size: cover;
+            background-repeat: no-repeat;
+            position: relative;
+        }
+        
+        .book-icon.small {
+            background-size: 70%;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-color: #f8f9fa;
+        }
+        
+        .keywords {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .keyword {
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .book-info {
+            padding: 1.5rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .book-title {
+            margin-bottom: 0.5rem;
+            font-size: 1.3rem;
+            color: var(--dark);
+        }
+        
+        .book-author {
+            color: #666;
+            margin-bottom: 1rem;
+            font-style: italic;
+        }
+        
+        .book-description {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: #555;
+            flex-grow: 1;
+            margin-bottom: 1rem;
+        }
+        
+        .read-button {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            text-align: center;
+            width: 100%;
+        }
+        
+        .read-button:hover {
+            background: var(--secondary);
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            width: 90%;
+            height: 90%;
+            max-width: 1200px;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-header {
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .close-button {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #888;
+            transition: color 0.3s ease;
+        }
+        
+        .close-button:hover {
+            color: var(--warning);
+        }
+        
+        .modal-body {
+            flex-grow: 1;
+            overflow: hidden;
+        }
+        
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+        
+        .dev-guide {
+            margin-top: 4rem;
+            padding: 2rem;
+            background: #e9ecef;
+            border-radius: 16px;
+        }
+        
+        .dev-guide h2 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        
+        .dev-guide pre {
+            background: #212529;
+            color: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .dev-guide p {
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+        
+        @media (max-width: 768px) {
+            .search-container {
+                flex-direction: column;
+            }
+            
+            .books-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+            
+            .dev-guide pre {
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>PRDV Reads </h1>
+        <p class="tagline">Explore amazing books and stories</p>
+    </header>
+    
+    <div class="container">
+        <div class="search-container">
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="Search books by title, author or keywords...">
+                <div class="search-icon">🔍</div>
+            </div>
+            <select class="filter-dropdown" id="filter-dropdown">
+                <option value="">All Categories</option>
+                <option value="FICTION">Fiction</option>
+                <option value="HABITS">Habits</option>
+                <option value="SELF-HELP">Self-Help</option>
+                <option value="ADVENTURE">Adventure</option>
+                <option value="FANTASY">Fantasy</option>
+            </select>
+        </div>
+        
+        <div class="books-grid" id="books-grid">
+            <!-- Books will be populated here dynamically -->
+        </div>
+        
+        <!-- <div class="dev-guide">
+            <h2>Developer Guide: How to Add a New Book</h2>
+            <p>To add a new book to the library, locate the <code>books</code> object in the script tag and add a new entry following this format:</p>
+            <pre>
+books = {
+    ...existing books...,
+    
+    "[new-index]": {
+        "keywords": ["KEYWORD1", "KEYWORD2"],
+        "name": "Book Title",
+        "description": "Book description goes here...",
+        "author": "Author Name",
+        "icon": {
+            "width": "1024px",
+            "height": "1024px",
+            "small": true, // Set to true for logo-style images
+            "url": "./img/bookcover.png"
+        },
+        "path": "./books/bookfile.pdf"
+    }
+}
+            </pre>
+            <p>No additional changes are needed - the book will automatically appear in the library once added to the books object!</p>
+        </div> -->
+    </div>
+    
+    <div class="modal" id="book-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Book Title</h2>
+                <button class="close-button" id="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <iframe id="pdf-viewer" src=""></iframe>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Book library database
+        var books = {
+            "1": {
+                "keywords": ["FICTION", "HABITS"],
+                "name": "Atomic Habits",
+                "description": "An easy & proven way to build good habits & break bad ones.",
+                "author": "James Clear",
+                "icon": {
+                    "width": "1024px",
+                    "height": "1024px",
+                    "small": true,
+                    "url": "./img/atomichabits.png"
+                },
+                "path": "./books/atomichabits.pdf"
+            },
+            "2": {
+                "keywords": ["MONEY", "RICHNESS"],
+                "name": "The pychlogy of Money",
+                "description": "Timeless lessons on wealth, greed, and happiness.",
+                "author": "Morgan Housel",
+                "icon": {
+                    "width": "1024px",
+                    "height": "1024px",
+                    "small": true,
+                    "url": "./img/pychologyofmoney.png"
+                },
+                "path": "./books/pychologyofmoney.pdf"
+            }, 
+            "3": {
+                "keywords": ["SELF-HELP", "HABITS"],
+                "name": "The Subtle Art of Not Giving a Fuck",
+                "description": "A counterintuitive approach to living a good life.",
+                "author": "Mark Manson",
+                "icon": {
+                    "width": "1024px",
+                    "height": "1024px",
+                    "small": true,
+                    "url": "./img/subtleart.png"
+                },
+                "path": "./books/subtleart.pdf"
+            },
+            "4": {
+                "keywords": ["FUN", "FICTION", "ADVENTURE"],
+                "name": "Mallu Bhallu",
+                "description": "A fun and adventurous story about a Mallu Bhallu the bear trying to protect his forest.",
+                "author": "Pawan Yadav",
+                "icon": {
+                    "width": "1024px",
+                    "height": "1024px",
+                    "small": true,
+                    "url": "./img/mallubhallu.png"
+                },
+                "path": "./books/mallubhallu.pdf"
+            }
+        }
+        
+        // DOM Elements
+        const booksGrid = document.getElementById('books-grid');
+        const searchInput = document.getElementById('search-input');
+        const filterDropdown = document.getElementById('filter-dropdown');
+        const modal = document.getElementById('book-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const pdfViewer = document.getElementById('pdf-viewer');
+        const closeModal = document.getElementById('close-modal');
+        
+        // Render all books on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            renderBooks(books);
+            
+            // Populate filter dropdown with unique keywords
+            const keywords = new Set();
+            Object.values(books).forEach(book => {
+                if (Array.isArray(book.keywords)) {
+                    book.keywords.forEach(keyword => keywords.add(keyword));
+                } else if (typeof book.keywords === 'object') {
+                    Object.values(book.keywords).forEach(keyword => keywords.add(keyword));
+                }
+            });
+            
+            // Remove existing options except the first one
+            while (filterDropdown.options.length > 1) {
+                filterDropdown.remove(1);
+            }
+            
+            // Add unique keywords to dropdown
+            keywords.forEach(keyword => {
+                const option = document.createElement('option');
+                option.value = keyword;
+                option.textContent = keyword;
+                filterDropdown.appendChild(option);
+            });
+        });
+        
+        // Search functionality
+        searchInput.addEventListener('input', filterBooks);
+        filterDropdown.addEventListener('change', filterBooks);
+        
+        function filterBooks() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const filterTerm = filterDropdown.value;
+            
+            const filteredBooks = {};
+            
+            Object.entries(books).forEach(([id, book]) => {
+                const nameMatch = book.name.toLowerCase().includes(searchTerm);
+                const authorMatch = book.author.toLowerCase().includes(searchTerm);
+                const descMatch = book.description.toLowerCase().includes(searchTerm);
+                
+                let keywordMatch = true;
+                if (filterTerm) {
+                    keywordMatch = false;
+                    if (Array.isArray(book.keywords)) {
+                        keywordMatch = book.keywords.some(keyword => 
+                            keyword.includes(filterTerm)
+                        );
+                    } else if (typeof book.keywords === 'object') {
+                        keywordMatch = Object.values(book.keywords).some(keyword => 
+                            keyword.includes(filterTerm)
+                        );
+                    }
+                }
+                
+                if ((nameMatch || authorMatch || descMatch) && keywordMatch) {
+                    filteredBooks[id] = book;
+                }
+            });
+            
+            renderBooks(filteredBooks);
+        }
+        
+        // Render books to the grid
+        function renderBooks(booksToRender) {
+            booksGrid.innerHTML = '';
+            
+            if (Object.keys(booksToRender).length === 0) {
+                booksGrid.innerHTML = '<div class="no-results">No books found matching your search criteria.</div>';
+                return;
+            }
+            
+            Object.entries(booksToRender).forEach(([id, book]) => {
+                const bookCard = document.createElement('div');
+                bookCard.className = 'book-card';
+                bookCard.dataset.id = id;
+                
+                const bookIcon = document.createElement('div');
+                bookIcon.className = `book-icon ${book.icon.small ? 'small' : ''}`;
+                bookIcon.style.backgroundImage = `url('${book.icon.url}')`;
+                
+                const keywords = document.createElement('div');
+                keywords.className = 'keywords';
+                
+                if (Array.isArray(book.keywords)) {
+                    book.keywords.forEach(keyword => {
+                        const keywordSpan = document.createElement('span');
+                        keywordSpan.className = 'keyword';
+                        keywordSpan.textContent = keyword;
+                        keywords.appendChild(keywordSpan);
+                    });
+                } else if (typeof book.keywords === 'object') {
+                    Object.values(book.keywords).forEach(keyword => {
+                        const keywordSpan = document.createElement('span');
+                        keywordSpan.className = 'keyword';
+                        keywordSpan.textContent = keyword;
+                        keywords.appendChild(keywordSpan);
+                    });
+                }
+                
+                bookIcon.appendChild(keywords);
+                
+                const bookInfo = document.createElement('div');
+                bookInfo.className = 'book-info';
+                
+                const bookTitle = document.createElement('h3');
+                bookTitle.className = 'book-title';
+                bookTitle.textContent = book.name;
+                
+                const bookAuthor = document.createElement('div');
+                bookAuthor.className = 'book-author';
+                bookAuthor.textContent = `by ${book.author}`;
+                
+                const bookDesc = document.createElement('p');
+                bookDesc.className = 'book-description';
+                bookDesc.textContent = book.description;
+                
+                const readButton = document.createElement('button');
+                readButton.className = 'read-button';
+                readButton.textContent = 'Read Now';
+                
+                bookInfo.appendChild(bookTitle);
+                bookInfo.appendChild(bookAuthor);
+                bookInfo.appendChild(bookDesc);
+                bookInfo.appendChild(readButton);
+                
+                bookCard.appendChild(bookIcon);
+                bookCard.appendChild(bookInfo);
+                
+                booksGrid.appendChild(bookCard);
+                
+                // Event listeners
+                bookCard.addEventListener('click', () => openBook(book));
+            });
+        }
+        
+        // Open book function
+        function openBook(book) {
+            modalTitle.textContent = book.name;
+            pdfViewer.src = book.path;
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        // Close modal
+        closeModal.addEventListener('click', () => {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+            setTimeout(() => {
+                pdfViewer.src = '';
+            }, 300);
+        });
+        
+        // Close modal when clicking outside
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal.click();
+            }
+        });
+        
+        // Close modal with escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('active')) {
+                closeModal.click();
+            }
+        });
+    </script>
+</body>
+</html>

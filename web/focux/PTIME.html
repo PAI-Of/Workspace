@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PRDV Timer</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    .hidden { display: none; }
+  </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+  <div id="app" class="max-w-md mx-auto p-4 rounded-lg shadow-lg bg-gray-100">
+    <h1 class="text-2xl font-bold text-center mb-4">PRDV Timer</h1>
+
+    <!-- Timer Mode Selection -->
+    <div class="flex justify-center mb-4 gap-2">
+      <button id="pomodoro-btn" class="px-4 py-2 rounded-md bg-gray-200">Pomodoro</button>
+      <button id="2minute-btn" class="px-4 py-2 rounded-md bg-gray-200">2-Minute</button>
+    </div>
+
+    <!-- Timer Display -->
+    <div class="text-center mb-4">
+      <div id="timer-display" class="text-4xl font-bold mb-2">25:00</div>
+      <div id="phase-display" class="text-xl mb-2">Work Time</div>
+      <div id="pomodoro-count" class="text-sm mb-2 hidden">Pomodoros: 0/4</div>
+    </div>
+
+    <!-- Timer Controls -->
+    <div class="flex justify-center gap-2 mb-6">
+      <button id="toggle-timer-btn" class="p-2 bg-blue-500 text-white rounded-full">▶️</button>
+      <button id="skip-phase-btn" class="p-2 bg-gray-500 text-white rounded-full">⏩</button>
+      <button id="reset-timer-btn" class="p-2 bg-red-500 text-white rounded-full">⏰</button>
+    </div>
+
+    <!-- Todo Section -->
+    <div class="mt-6">
+      <h2 class="text-xl font-bold mb-2">Task Breakdown</h2>
+      <p class="text-sm mb-4">Break down your tasks into 2-minute segments</p>
+
+      <!-- Add new todo -->
+      <div class="flex mb-4">
+        <input type="text" id="new-todo-input" class="flex-1 border border-gray-300 rounded-l-md px-3 py-2" placeholder="Add a new task...">
+        <button id="add-todo-btn" class="bg-blue-500 text-white px-4 py-2 rounded-r-md">Add</button>
+      </div>
+
+      <!-- Todo list -->
+      <div id="todo-list" class="space-y-2"></div>
+    </div>
+  </div>
+
+  <script>
+    const app = document.getElementById('app');
+    const pomodoroBtn = document.getElementById('pomodoro-btn');
+    const twoMinuteBtn = document.getElementById('2minute-btn');
+    const timerDisplay = document.getElementById('timer-display');
+    const phaseDisplay = document.getElementById('phase-display');
+    const pomodoroCountDisplay = document.getElementById('pomodoro-count');
+    const toggleTimerBtn = document.getElementById('toggle-timer-btn');
+    const skipPhaseBtn = document.getElementById('skip-phase-btn');
+    const resetTimerBtn = document.getElementById('reset-timer-btn');
+    const newTodoInput = document.getElementById('new-todo-input');
+    const addTodoBtn = document.getElementById('add-todo-btn');
+    const todoList = document.getElementById('todo-list');
+
+    let mode = 'pomodoro';
+    let isRunning = false;
+    let timeLeft = 25 * 60;
+    let phase = 'work';
+    let pomodoroCount = 0;
+    let intervalId = null;
+    let todos = [{ id: 1, text: 'Example Task', completed: false, expanded: true, subtasks: [{ id: 11, text: 'Subtask 1', completed: false }, { id: 12, text: 'Subtask 2', completed: false }] }];
+    let newTodoText = '';
+    let newSubtaskText = '';
+    let activeParentId = null;
+
+    const durations = {
+      pomodoro: { work: 25 * 60, break: 5 * 60, longBreak: 15 * 60 },
+      '2minute': { work: 2 * 60, break: 1 * 60 }
+    };
+
+    const formatTime = (seconds) => {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    const updateTimerDisplay = () => {
+      timerDisplay.textContent = formatTime(timeLeft);
+      phaseDisplay.textContent = phase === 'work' ? 'Work Time' : phase === 'longBreak' ? 'Long Break' : 'Break Time';
+      pomodoroCountDisplay.textContent = `Pomodoros: ${pomodoroCount}/4`;
+      pomodoroCountDisplay.classList.toggle('hidden', mode !== 'pomodoro');
+    };
+
+    const toggleTimer = () => {
+      if (isRunning) {
+        clearInterval(intervalId);
+      } else {
+        intervalId = setInterval(() => {
+          timeLeft--;
+          updateTimerDisplay();
+          if (timeLeft <= 0) {
+            handlePhaseComplete();
+          }
+        }, 1000);
+      }
+      isRunning = !isRunning;
+      toggleTimerBtn.textContent = isRunning ? '⏸️' : '▶️';
+    };
+
+    const handlePhaseComplete = () => {
+      clearInterval(intervalId);
+      if (phase === 'work') {
+        if (mode === 'pomodoro') {
+          pomodoroCount++;
+          if (pomodoroCount % 4 === 0) {
+            phase = 'longBreak';
+            timeLeft = durations.pomodoro.longBreak;
+          } else {
+            phase = 'break';
+            timeLeft = durations.pomodoro.break;
+          }
+        } else {
+          phase = 'break';
+          timeLeft = durations['2minute'].break;
+        }
+      } else {
+        phase = 'work';
+        timeLeft = durations[mode].work;
+      }
+      updateTimerDisplay();
+      playNotificationSound();
+    };
+
+    const skipPhase = () => {
+      clearInterval(intervalId);
+      isRunning = false;
+      handlePhaseComplete();
+    };
+
+    const resetTimer = () => {
+      clearInterval(intervalId);
+      isRunning = false;
+      phase = 'work';
+      timeLeft = durations[mode].work;
+      if (mode === 'pomodoro') {
+        pomodoroCount = 0;
+      }
+      updateTimerDisplay();
+      toggleTimerBtn.textContent = '▶️';
+    };
+
+    const playNotificationSound = () => {
+      const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj2n7/+pTw8HM5r0/7hfGgItl+z/yHIjBCeO5P/XiC8FIITb/+ObNwUaeNP/87I+BhVuzP8FxkYHD2TK/xjUTAgKW8X/LuFTCQdSv/9C7VoJBEq6/1f5YAoDQbX/bQVnCgE4sP+DD20KADGr/5gZdAwVJKD/uih9DhUXl//UOIUQFQmR/+1HjBIUA4v/CE2SEwT9hv8jUpkUBPeC/z5XnxUD8X7/WVylFgLreuV0cagXAuZ2LY9yqxcC4XMQpHOtFwLccPi4da4XAthueM12rxcC1GvF6HC0GHXPaOnDb7YYdctmFexxuBh2yGNh+221GHbFYK0HarUYd8Nd4hNlthh4wFr1IF+3GHi9WFE3WLgZerpaKUdSuRl7t1fPXEy6GXy0VbtyRrwaffFT9ocIwitRLJwBBTxPX7MNEilIkMoVHiNEwOQcJiM/8PsdLCQ8FwkWLiU4SBscJSkyeiUlITCrMiogLdRFOR8p/VU/HiYoaWNFHSUacXJJHCQWfH5OHCIThoRSGxYQj4pVGxQNl5dZGhEKn55cGRFToKVfGBBNqL5iGA9Ir9VlFxFEtvtoFhQ/vgRrFBY8xBttEhk5yTBvERw2z05xDx81Zo5zcRAekbeVdBEkhMGcdhA6f8ujeBBBe9SoeRHydr6ueRHyc8m1ehHxctC7exLvcte/fBPtcNzDfRTsbuLIfhXrabDe03DQVF6n3N1uzg9Sn9jmcM0KTprT7XLLBUuW0fR0ywBIks74dsv7RY7N/XjM+UOKzQJ7zfZBh8wIfc71P4TLD3/P8z2CyxZ/0fFXf6zLeH3V7yp9aqdte9jtFXtpbW152Owm/Qdobnjh6lv/BGRsd+LpVgAGYmx35ug0AghibHfp5x4ECWJrd+vmRAYKYmt37uU3CAthangk5FEKDGBpeJXiYwwNYGl34OF6Dg5faXfp4JgQEF5peYDgvBISXWl52uDiExRcanqo3w8VFlxpe6Xe2RYXXGp7WK3wMT/9//80QQgIADheQQEAHrNHBQAb/UsFABr9UCYNGPtVUy0X+Vx4SRb3YqV5FPVwx6kT83jpxhLxjQTqEfCwIPAP774+9w7tw1zzDe2XcvgM7Lp0+wvp2HbxCujzee8I5g99rgbkIIXV++I5jcTh4T+wzBTg1JH00I/e95vU+5PoCYfY+JTpMXba95HrXG3d9o7thmrf9YvvnmHi9In0vWLn84T26GTs8oD47Wrx8H36Cm7v73v8JnHu7X3/P3Tt63//YnbdKX8BhXeRNAGaeJwgAa55pQkBxXu9eAeOfc9gBah/9jQEzIEZAwb0gywCAR6EnKgACKXd+//Hp3D3/+qtWpj//7S2RoP//7u/M3D//8HIO13//8fTDkr//87cAzj//9TlAC3//9vt/yMQAOLzBwDfDRDn+M//2h0l7f7N/9UsOPED///RPVL2///YTm3v///fX4vp///md6vk///tiNDf///0mfXZ////vDTX////1lzT////72vQ//8=');
+      audio.play();
+    };
+
+    const addTodo = () => {
+      if (newTodoText.trim()) {
+        const newTodo = {
+          id: Date.now(),
+          text: newTodoText,
+          completed: false,
+          expanded: true,
+          subtasks: []
+        };
+        todos.push(newTodo);
+        renderTodos();
+        newTodoText = '';
+        newTodoInput.value = '';
+      }
+    };
+
+    const addSubtask = (parentId) => {
+      if (newSubtaskText.trim()) {
+        todos = todos.map(todo => {
+          if (todo.id === parentId) {
+            return {
+              ...todo,
+              subtasks: [...todo.subtasks, {
+                id: Date.now(),
+                text: newSubtaskText,
+                completed: false
+              }]
+            };
+          }
+          return todo;
+        });
+        newSubtaskText = '';
+        activeParentId = null;
+        renderTodos();
+      }
+    };
+
+    const toggleTodo = (id, isSubtask, parentId) => {
+      if (isSubtask) {
+        todos = todos.map(todo => {
+          if (todo.id === parentId) {
+            return {
+              ...todo,
+              subtasks: todo.subtasks.map(subtask =>
+                subtask.id === id ? { ...subtask, completed: !subtask.completed } : subtask
+              )
+            };
+          }
+          return todo;
+        });
+      } else {
+        todos = todos.map(todo =>
+          todo.id === id ? { ...todo, completed: !todo.completed } : todo
+        );
+      }
+      renderTodos();
+    };
+
+    const toggleExpansion = (id) => {
+      todos = todos.map(todo =>
+        todo.id === id ? { ...todo, expanded: !todo.expanded } : todo
+      );
+      renderTodos();
+    };
+
+    const deleteTodo = (id, isSubtask, parentId) => {
+      if (isSubtask) {
+        todos = todos.map(todo => {
+          if (todo.id === parentId) {
+            return {
+              ...todo,
+              subtasks: todo.subtasks.filter(subtask => subtask.id !== id)
+            };
+          }
+          return todo;
+        });
+      } else {
+        todos = todos.filter(todo => todo.id !== id);
+      }
+      renderTodos();
+    };
+
+    const renderTodos = () => {
+      todoList.innerHTML = todos.map(todo => `
+        <div class="border border-gray-200 rounded-md p-2">
+          <div class="flex items-center">
+            <button class="mr-2 text-gray-500 hover:text-gray-700" onclick="toggleExpansion(${todo.id})">
+              ${todo.expanded ? '▼' : '▶'}
+            </button>
+            <button class="mr-2" onclick="toggleTodo(${todo.id}, false)">
+              ${todo.completed ? '✅' : '⭕'}
+            </button>
+            <span class="${todo.completed ? 'line-through text-gray-500' : ''}">${todo.text}</span>
+            <button class="text-red-500 hover:text-red-700 ml-auto" onclick="deleteTodo(${todo.id}, false)">
+              &times;
+            </button>
+          </div>
+          ${todo.expanded ? `
+            <div class="pl-8 mt-2 space-y-2">
+              ${todo.subtasks.map(subtask => `
+                <div class="flex items-center">
+                  <button class="mr-2" onclick="toggleTodo(${subtask.id}, true, ${todo.id})">
+                    ${subtask.completed ? '✅' : '⭕'}
+                  </button>
+                  <span class="${subtask.completed ? 'line-through text-gray-500' : ''}">${subtask.text}</span>
+                  <button class="text-red-500 hover:text-red-700 ml-auto" onclick="deleteTodo(${subtask.id}, true, ${todo.id})">
+                    &times;
+                  </button>
+                </div>
+              `).join('')}
+              ${activeParentId === todo.id ? `
+                <div class="flex">
+                  <input type="text" value="${newSubtaskText}" oninput="newSubtaskText = this.value" class="flex-1 border border-gray-300 rounded-l-md px-2 py-1 text-sm" placeholder="Add a subtask..." onkeypress="if (event.key === 'Enter') addSubtask(${todo.id})" autofocus>
+                  <button class="bg-blue-500 text-white px-2 py-1 rounded-r-md text-sm" onclick="addSubtask(${todo.id})">
+                    Add
+                  </button>
+                </div>
+              ` : `
+                <button class="text-blue-500 hover:text-blue-700 text-sm" onclick="activeParentId = ${todo.id}">
+                  + Add subtask
+                </button>
+              `}
+            </div>
+          ` : ''}
+        </div>
+      `).join('');
+    };
+
+    pomodoroBtn.addEventListener('click', () => {
+      changeMode('pomodoro');
+    });
+
+    twoMinuteBtn.addEventListener('click', () => {
+      changeMode('2minute');
+    });
+
+    toggleTimerBtn.addEventListener('click', toggleTimer);
+    skipPhaseBtn.addEventListener('click', skipPhase);
+    resetTimerBtn.addEventListener('click', resetTimer);
+    addTodoBtn.addEventListener('click', addTodo);
+    newTodoInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') addTodo();
+    });
+
+    const changeMode = (newMode) => {
+      mode = newMode;
+      phase = 'work';
+      pomodoroCount = 0;
+      isRunning = false;
+      timeLeft = durations[newMode].work;
+      updateTimerDisplay();
+      pomodoroBtn.classList.toggle('bg-blue-500', newMode === 'pomodoro');
+      pomodoroBtn.classList.toggle('text-white', newMode === 'pomodoro');
+      twoMinuteBtn.classList.toggle('bg-blue-500', newMode === '2minute');
+      twoMinuteBtn.classList.toggle('text-white', newMode === '2minute');
+      pomodoroBtn.classList.toggle('bg-gray-200', newMode !== 'pomodoro');
+      twoMinuteBtn.classList.toggle('bg-gray-200', newMode !== '2minute');
+    };
+
+    updateTimerDisplay();
+    renderTodos();
+  </script>
+</body>
+</html>
