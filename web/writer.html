@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pointer Writer</title>
     <link rel="shortcut icon" href="img/writer.png">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"> 
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.js.iife.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.css"/>
     <style>
         :root {
             --primary-color: #1180ff;
@@ -239,14 +241,14 @@
             Pointer Writer
         </div>
         <div class="toolbar">
-            <div class="toolbar-group">
+            <div class="toolbar-group" id="fontStyles">
                 <button id="boldBtn" onclick="execCmd('bold')" title="Bold"><i class="fas fa-bold"></i></button>
                 <button id="italicBtn" onclick="execCmd('italic')" title="Italic"><i class="fas fa-italic"></i></button>
                 <button id="underlineBtn" onclick="execCmd('underline')" title="Underline"><i class="fas fa-underline"></i></button>
                 <button id="strikeBtn" onclick="execCmd('strikeThrough')" title="Strike Through"><i class="fas fa-strikethrough"></i></button>
             </div>
             
-            <div class="toolbar-group">
+            <div class="toolbar-group" id="fontFaces">
                 <select id="fontName" onchange="execCmd('fontName', this.value)" title="Font Family">
                     <option value="Arial, sans-serif">Arial</option>
                     <option value="'Times New Roman', serif">Times New Roman</option>
@@ -267,21 +269,21 @@
                 </select>
             </div>
             
-            <div class="toolbar-group">
+            <div class="toolbar-group" id="textAlignment">
                 <button onclick="execCmd('justifyLeft')" title="Align Left"><i class="fas fa-align-left"></i></button>
                 <button onclick="execCmd('justifyCenter')" title="Align Center"><i class="fas fa-align-center"></i></button>
                 <button onclick="execCmd('justifyRight')" title="Align Right"><i class="fas fa-align-right"></i></button>
                 <button onclick="execCmd('justifyFull')" title="Justify"><i class="fas fa-align-justify"></i></button>
             </div>
             
-            <div class="toolbar-group">
+            <div class="toolbar-group" id="listStyles">
                 <button onclick="execCmd('insertOrderedList')" title="Ordered List"><i class="fas fa-list-ol"></i></button>
                 <button onclick="execCmd('insertUnorderedList')" title="Unordered List"><i class="fas fa-list-ul"></i></button>
                 <button onclick="execCmd('indent')" title="Indent"><i class="fas fa-indent"></i></button>
                 <button onclick="execCmd('outdent')" title="Outdent"><i class="fas fa-outdent"></i></button>
             </div>
             
-            <div class="toolbar-group">
+            <div class="toolbar-group" id="colorStyles">
                 <input type="color" onchange="execCmd('foreColor', this.value)" title="Font Color">
                 <input type="color" onchange="execCmd('hiliteColor', this.value)" title="Highlight Color">
                 <button onclick="execCmd('insertHorizontalRule')" title="Horizontal Rule"><i class="fas fa-minus"></i></button>
@@ -289,14 +291,14 @@
                 <button onclick="execCmd('unlink')" title="Remove Link"><i class="fas fa-unlink"></i></button>
             </div>
             
-            <div class="toolbar-group">
+            <div class="toolbar-group" id="StyleReverse">
                 <button onclick="execCmd('undo')" title="Undo"><i class="fas fa-undo"></i></button>
                 <button onclick="execCmd('redo')" title="Redo"><i class="fas fa-redo"></i></button>
                 <button onclick="execCmd('removeFormat')" title="Clear Formatting"><i class="fas fa-eraser"></i></button>
                 <button onclick="toggleTheme()" title="Toggle Theme"><i class="fas fa-moon"></i></button>
             </div>
 
-            <div class="import-container">
+            <div class="import-container" id="fileControls">
                 <label for="import-file" class="import-label">
                     <i class="fas fa-file-import"></i> Import
                 </label>
@@ -316,7 +318,6 @@
             <button class="btn btn-primary" onclick="saveText()">Save Document</button>
         </div>
     </div>
-
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('editor').focus();
@@ -545,6 +546,103 @@
             // Reset the file input for future imports
             input.value = '';
         }
+    </script>
+    <script type="module">
+        function tour(){
+            const driver = window.driver.js.driver;
+
+            const driverObj = driver({
+                showProgress: true,
+                steps: [
+                    { 
+                        element: '#editor', 
+                        popover: { 
+                            title: 'The Editor', 
+                            description: 'This is the main editor where you can create, write, update, and remove your text in a technical and efficient way.' 
+                        } 
+                    },
+                    { 
+                        element: '.toolbar', 
+                        popover: { 
+                            title: 'The Toolbar', 
+                            description: 'The toolbar gives you quick access to important editing options like font style, alignment, lists, and more.' 
+                        } 
+                    },
+                    { 
+                        element: '#fontStyles', 
+                        popover: { 
+                            title: 'Font Style', 
+                            description: 'Use font styles such as bold, italic, underline, and strikethrough to customize your text appearance.' 
+                        } 
+                    },
+                    { 
+                        element: '#fontFaces', 
+                        popover: { 
+                            title: 'Font Face', 
+                            description: 'Select different font faces to change the look and feel of your text, giving it personality and clarity.' 
+                        } 
+                    },
+                    { 
+                        element: '#textAlignment', 
+                        popover: { 
+                            title: 'Text Alignment', 
+                            description: 'Align your text to the left, center, right, or justify it to maintain clean and professional layouts.' 
+                        } 
+                    },
+                    { 
+                        element: '#listStyles', 
+                        popover: { 
+                            title: 'List Styling', 
+                            description: 'Create organized bullet points or numbered lists to structure your content clearly.' 
+                        } 
+                    },
+                    { 
+                        element: '#colorStyles', 
+                        popover: { 
+                            title: 'Color Styling', 
+                            description: 'Customize the text color and background color to highlight important information or add visual appeal.' 
+                        } 
+                    },
+                    { 
+                        element: '#StyleReverse', 
+                        popover: { 
+                            title: 'The Timeline', 
+                            description: 'View and revert the history of your edits, helping you undo or track changes easily.' 
+                        } 
+                    },
+                    { 
+                        element: '#fileControls', 
+                        popover: { 
+                            title: 'File Import', 
+                            description: 'Import existing text files or upload documents to start editing without starting from scratch.' 
+                        } 
+                    },
+                    { 
+                        element: '.status-bar', 
+                        popover: { 
+                            title: 'Status Bar', 
+                            description: 'The status bar shows information like word count, character count, and file status for better tracking.' 
+                        } 
+                    },
+                    { 
+                        element: '.action-buttons', 
+                        popover: { 
+                            title: 'New & Export Buttons', 
+                            description: 'Quickly create a new document or export your work in different formats for sharing or backup.' 
+                        } 
+                    },
+                ]
+            });
+
+
+            driverObj.drive();
+            localStorage.setItem('tourCompleted', 'true');
+        }
+        // Check if the tour has already been completed
+        // If not, start the tour
+        if (!localStorage.getItem('tourCompleted')) {
+            tour();
+        }       
     </script>
 </body>
 </html>

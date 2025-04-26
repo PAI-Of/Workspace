@@ -9,6 +9,8 @@
   <!-- jsPDF for PDF generation -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.js.iife.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.css"/>
   <style>
     :root {
       --primary-color: #3498db;
@@ -168,7 +170,7 @@
 
     .import-area {
       border: 2px dashed var(--medium-gray);
-      padding: :20px;
+      padding: 20px;
       text-align: center;
       background-color: var(--light-gray);
       border-radius: var(--border-radius);
@@ -755,5 +757,82 @@
     // Load saved students on page load
     window.addEventListener('DOMContentLoaded', loadStudents);
   </script>
+      <script type="module">
+        function tour(){
+            const driver = window.driver.js.driver;
+
+            const driverObj = driver({
+                showProgress: true,
+                steps: [
+                    { 
+                        element: '#studentName', 
+                        popover: { 
+                            title: 'The Student Name', 
+                            description: 'Enter the name of the student here.' 
+                        },
+
+                    },
+                    {
+                      element: '#projectMarking',
+                      popover: {
+                        title: 'Project Marking',
+                        description: 'Enter the project marking here.'
+                      }
+                    },
+                    {
+                      element: '#projectImage',
+                      popover: {
+                        title: 'Project Image',
+                        description: 'Upload the project image here.'
+                      }
+                    },
+                    {
+                      element: '#importBtn',
+                      popover: {
+                        title: 'Import Students',
+                        description: 'Click here to import students from an Excel file.'
+                      }
+                    },
+                    {
+                      element: '#studentListCard',
+                      popover: {
+                        title: 'Student List',
+                        description: 'This is where the list of added students will appear.'
+                      }
+                    },
+                    {
+                      element: '#previewBtn',
+                      popover: {
+                        title: 'Preview Project Sheets',
+                        description: 'Click here to preview the project sheets.'
+                      }
+                    },
+                    {
+                      element: '#exportPdfBtn',
+                      popover: {
+                        title: 'Export to PDF',
+                        description: 'Click here to export the project sheets to a PDF file.'
+                      }
+                    },
+                    {
+                      element: '#resetBtn',
+                      popover: {
+                        title: 'Reset All Data',
+                        description: 'Click here to reset all data.'
+                      }
+                    }
+                ]
+            });
+
+
+            driverObj.drive();
+            localStorage.setItem('tourCompleted_forprojectify', 'true');
+        }
+        // Check if the tour has already been completed
+        // If not, start the tour
+        if (!localStorage.getItem('tourCompleted_forprojectify')) {
+            tour();
+        }       
+    </script>
 </body>
 </html>
