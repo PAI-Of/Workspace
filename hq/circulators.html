@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PI Circulators</title>
+    <link rel="shortcut icon" href="./img/pic.png" alt="circular-icon">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"> 
+    <style>
+        :root {
+            --primary-color: #4a4a4a;
+            --secondary-color: #333333;
+            --accent-color: #007acc;
+            --text-color: #e0e0e0;
+            --dark-bg: #2d2d2d;
+            --darker-bg: #1e1e1e;
+            --border-color: #444444;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: var(--darker-bg);
+            color: var(--text-color);
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1000px;
+            margin: 20px auto;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .app-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .app-header img {
+            margin-right: 10px;
+            height: 32px;
+            width: 32px;
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            padding: 10px;
+            background: var(--dark-bg);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .toolbar-group {
+            display: flex;
+            border-right: 1px solid var(--border-color);
+            padding-right: 10px;
+            margin-right: 10px;
+        }
+
+        .toolbar button {
+            width: 40px;
+            height: 40px;
+            background: var(--dark-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-color);
+        }
+
+        .toolbar button:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .toolbar button.active {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .toolbar select, .toolbar input {
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: var(--dark-bg);
+            color: var(--text-color);
+        }
+
+        .date-picker {
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+        }
+
+        .date-picker input {
+            margin-left: 5px;
+        }
+
+        #editor {
+            width: 100%;
+            min-height: 650px;
+            padding: 20px;
+            outline: none;
+            background-color: white;
+            box-sizing: border-box;
+            overflow-y: auto;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .circular-template {
+            padding: 20px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .circular-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .circular-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .circular-date {
+            text-align: right;
+            margin: 15px 0;
+        }
+
+        .circular-content {
+            margin: 20px 0;
+        }
+
+        .circular-footer {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background-color: var(--dark-bg);
+            border-top: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        #word-count {
+            color: #999;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            padding: 15px;
+            background-color: var(--dark-bg);
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #005999;
+        }
+
+        .btn-secondary {
+            background-color: #505050;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #404040;
+        }
+
+        .import-container {
+            display: flex;
+            align-items: center;
+            margin-right: 10px;
+        }
+
+        .import-container input[type="file"] {
+            display: none;
+        }
+
+        .import-label {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 12px;
+            background-color: var(--accent-color);
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        .import-label:hover {
+            background-color: #005999;
+        }
+
+        .import-label i {
+            margin-right: 5px;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .toolbar {
+                flex-direction: row;
+                overflow-x: auto;
+            }
+            
+            .container {
+                width: 95%;
+            }
+        }
+
+        /* Image signature preview */
+        .signature-preview {
+            max-height: 100px;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="app-header">
+            PI Circulators
+        </div>
+        <div class="toolbar">
+            <div class="toolbar-group" id="fontStyles">
+                <button id="boldBtn" onclick="execCmd('bold')" title="Bold"><i class="fas fa-bold"></i></button>
+                <button id="italicBtn" onclick="execCmd('italic')" title="Italic"><i class="fas fa-italic"></i></button>
+                <button id="underlineBtn" onclick="execCmd('underline')" title="Underline"><i class="fas fa-underline"></i></button>
+            </div>
+            
+            <div class="toolbar-group" id="fontFaces">
+                <select id="fontName" onchange="execCmd('fontName', this.value)" title="Font Family">
+                    <option value="'Open Sans', sans-serif">Open Sans</option>
+                    <option value="'Segoe UI', sans-serif">MS Sans</option>
+                    <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
+                    <option value="'Fira Code', monospace">Fira Code</option>
+                </select>
+                
+                <select id="fontSize" onchange="execCmd('fontSize', this.value)" title="Font Size">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3" selected>3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                </select>
+            </div>
+            
+            <div class="toolbar-group" id="textAlignment">
+                <button onclick="execCmd('justifyLeft')" title="Align Left"><i class="fas fa-align-left"></i></button>
+                <button onclick="execCmd('justifyCenter')" title="Align Center"><i class="fas fa-align-center"></i></button>
+                <button onclick="execCmd('justifyRight')" title="Align Right"><i class="fas fa-align-right"></i></button>
+            </div>
+            
+            <div class="toolbar-group" id="listStyles">
+                <button onclick="execCmd('insertOrderedList')" title="Numbered List"><i class="fas fa-list-ol"></i></button>
+                <button onclick="execCmd('insertUnorderedList')" title="Bullet List"><i class="fas fa-list-ul"></i></button>
+            </div>
+            
+            <div class="toolbar-group" id="colorStyles">
+                <input type="color" onchange="execCmd('foreColor', this.value)" title="Font Color">
+                <button onclick="insertDate()" title="Insert Date"><i class="fas fa-calendar-alt"></i></button>
+            </div>
+            
+            <div class="date-picker">
+                <input type="date" id="datePicker" title="Select Date">
+            </div>
+
+            <div class="import-container" id="signatureUpload">
+                <label for="import-signature" class="import-label">
+                    <i class="fas fa-signature"></i> Add Signature
+                </label>
+                <input type="file" id="import-signature" accept="image/*" onchange="importSignature(this)">
+            </div>
+        </div>
+        
+        <div id="editor" contenteditable="true">
+            <div class="circular-template">
+                <div class="circular-header">
+                    <div class="circular-title">SCHOOL CIRCULAR</div>
+                    <div>Ref: SCHOOL/CIRCULAR/2025/001</div>
+                </div>
+                
+                <div class="circular-date">
+                    Date: <span id="currentDate"></span>
+                </div>
+                
+                <div class="circular-content">
+                    <p><strong>Subject:</strong> [Enter Subject Here]</p>
+                    
+                    <p>Dear Parents/Students,</p>
+                    <p>This is to inform you that [Enter your circular content here].</p>
+                    <p>Please note the following important points:</p>
+                    <ul>
+                        <li>Point 1</li>
+                        <li>Point 2</li>
+                        <li>Point 3</li>
+                    </ul>
+                    <p>For any queries, please contact the school office.</p>
+                    <p>Thank you for your cooperation.</p>
+                </div>
+                
+                <div class="circular-footer">
+                    <div>
+                        <p>Regards,</p>
+                        <div id="signatureImgContainer"></div>
+                        <p><strong>Principal</strong></p>
+                    </div>
+                    <div>
+                        <p><strong>School Stamp</strong></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="status-bar">
+            <div id="word-count">Words: 0 | Characters: 0</div>
+            <div id="last-saved">Not saved yet</div>
+        </div>
+        
+        <div class="action-buttons">
+            <button class="btn btn-secondary" onclick="clearEditor()">New Circular</button>
+            <button class="btn btn-primary" onclick="exportToPDF()">Export to PDF</button>
+        </div>
+    </div>
+
+    <!-- External libraries for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('editor').focus();
+            document.getElementById('editor').addEventListener('input', updateWordCount);
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey && e.key === 's') {
+                    e.preventDefault();
+                    exportToPDF();
+                }
+            });
+            document.getElementById('editor').addEventListener('click', updateButtonStates);
+            document.getElementById('editor').addEventListener('keyup', updateButtonStates);
+            updateWordCount();
+            
+            // Set today's date in the current date span
+            const today = new Date();
+            const formattedDate = today.toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            }).replace(/\//g, '-');
+            document.getElementById('currentDate').textContent = formattedDate;
+            document.getElementById('datePicker').value = today.toISOString().split('T')[0];
+            
+            // Set up date picker listener
+            document.getElementById('datePicker').addEventListener('change', function() {
+                const selectedDate = new Date(this.value);
+                const formattedSelectedDate = selectedDate.toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                }).replace(/\//g, '-');
+                document.getElementById('currentDate').textContent = formattedSelectedDate;
+            });
+        });
+
+        function execCmd(command, value = null) {
+            document.execCommand(command, false, value);
+            document.getElementById('editor').focus();
+            updateButtonStates();
+            updateWordCount();
+        }
+
+        function updateButtonStates() {
+            const commands = [
+                { id: 'boldBtn', command: 'bold' },
+                { id: 'italicBtn', command: 'italic' },
+                { id: 'underlineBtn', command: 'underline' }
+            ];
+            
+            commands.forEach(item => {
+                const button = document.getElementById(item.id);
+                if (button) {
+                    if (document.queryCommandState(item.command)) {
+                        button.classList.add('active');
+                    } else {
+                        button.classList.remove('active');
+                    }
+                }
+            });
+            
+            const fontName = document.queryCommandValue('fontName');
+            const fontSize = document.queryCommandValue('fontSize');
+            
+            if (fontName) {
+                const fontSelect = document.getElementById('fontName');
+                for (let i = 0; i < fontSelect.options.length; i++) {
+                    if (fontSelect.options[i].value === fontName) {
+                        fontSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+            
+            if (fontSize) {
+                const sizeSelect = document.getElementById('fontSize');
+                for (let i = 0; i < sizeSelect.options.length; i++) {
+                    if (sizeSelect.options[i].value === fontSize) {
+                        sizeSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+        }
+
+        function updateWordCount() {
+            const text = document.getElementById('editor').innerText;
+            const wordCount = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+            const charCount = text.length;
+            
+            document.getElementById('word-count').textContent = `Words: ${wordCount} | Characters: ${charCount}`;
+        }
+
+        function clearEditor() {
+            if (confirm('Are you sure you want to create a new circular? All unsaved changes will be lost.')) {
+                // Keep the structure but clear the content
+                document.getElementById('editor').innerHTML = `
+                <div class="circular-template">
+                    <div class="circular-header">
+                        <div class="circular-title">SCHOOL CIRCULAR</div>
+                        <div>Ref: SCHOOL/CIRCULAR/2025/001</div>
+                    </div>
+                    
+                    <div class="circular-date">
+                        Date: <span id="currentDate"></span>
+                    </div>
+                    
+                    <div class="circular-content">
+                        <p><strong>Subject:</strong> [Enter Subject Here]</p>
+                        
+                        <p>Dear Parents/Students,</p>
+                        <p>This is to inform you that [Enter your circular content here].</p>
+                        <p>Please note the following important points:</p>
+                        <ul>
+                            <li>Point 1</li>
+                            <li>Point 2</li>
+                            <li>Point 3</li>
+                        </ul>
+                        <p>For any queries, please contact the school office.</p>
+                        <p>Thank you for your cooperation.</p>
+                    </div>
+                    
+                    <div class="circular-footer">
+                        <div>
+                            <p>Regards,</p>
+                            <div id="signatureImgContainer"></div>
+                            <p><strong>Principal</strong></p>
+                        </div>
+                        <div>
+                            <p><strong>School Stamp</strong></p>
+                        </div>
+                    </div>
+                </div>`;
+                
+                // Reset date to today
+                const today = new Date();
+                const formattedDate = today.toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                }).replace(/\//g, '-');
+                document.getElementById('currentDate').textContent = formattedDate;
+                document.getElementById('datePicker').value = today.toISOString().split('T')[0];
+                
+                updateWordCount();
+                document.getElementById('last-saved').textContent = 'Not saved yet';
+            }
+        }
+
+        function insertDate() {
+            const selectedDate = document.getElementById('datePicker').value;
+            if (selectedDate) {
+                const date = new Date(selectedDate);
+                const formattedDate = date.toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                }).replace(/\//g, '-');
+                
+                document.execCommand('insertText', false, formattedDate);
+            } else {
+                const today = new Date();
+                const formattedDate = today.toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                }).replace(/\//g, '-');
+                
+                document.execCommand('insertText', false, formattedDate);
+            }
+        }
+
+        function importSignature(input) {
+            if (!input.files || input.files.length === 0) {
+                return;
+            }
+
+            const file = input.files[0];
+            if (!file.type.startsWith('image/')) {
+                alert('Please select a valid image file.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const signatureContainer = document.getElementById('signatureImgContainer');
+                    signatureContainer.innerHTML = `<img src="${e.target.result}" alt="Signature" style="max-height: 80px; max-width: 200px;">`;
+                } catch (error) {
+                    console.error('Error importing signature:', error);
+                    alert('Error importing signature. Please try again with a valid image file.');
+                }
+            };
+            
+            reader.onerror = function() {
+                alert('Error reading file. Please try again.');
+            };
+            
+            reader.readAsDataURL(file);
+            
+            // Reset the file input for future imports
+            input.value = '';
+        }
+
+        function exportToPDF() {
+            const element = document.getElementById('editor');
+            const filename = 'Circular_' + new Date().toISOString().slice(0, 10) + '.pdf';
+            
+            const opt = {
+                margin: [10, 10, 10, 10],
+                filename: filename,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            
+            // First update the save status
+            const now = new Date();
+            document.getElementById('last-saved').textContent = `Last exported: ${now.toLocaleTimeString()}`;
+            
+            // Then generate the PDF
+            html2pdf().from(element).set(opt).save().then(() => {
+                alert('Circular has been exported to PDF!');
+            }).catch(err => {
+                console.error('Error exporting to PDF:', err);
+                alert('Error exporting to PDF. Please try again.');
+            });
+        }
+    </script>
+</body>
+</html>
+<!--
+PI Circulators
+v1.0.0 / 2025
+Copyright (c) 2025 Powered Intelligence . India
+Based on pWriter
+-->
